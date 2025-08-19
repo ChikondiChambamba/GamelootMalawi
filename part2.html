@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameLootMalawi - Product Loading Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2a0a5e;
+            --secondary: #ff6b00;
+            --accent: #00c3ff;
+            --light: #f5f5f7;
+            --dark: #121212;
+            --gray: #8a8a8f;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .section-title p {
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--secondary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .product-img {
+            height: 220px;
+            background-color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .product-img img {
+            max-height: 180px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .product-content {
+            padding: 1.5rem;
+        }
+
+        .product-category {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .product-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .product-price {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .current-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .original-price {
+            font-size: 1.1rem;
+            color: var(--gray);
+            text-decoration: line-through;
+        }
+
+        .product-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-btn {
+            width: 48%;
+            padding: 12px 0;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .add-to-cart {
+            background: var(--primary);
+            color: white;
+        }
+
+        .add-to-cart:hover {
+            background: #1e0847;
+        }
+
+        .view-details {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .view-details:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--gray);
+        }
+
+        .loading i {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            background: white;
+            color: var(--dark);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .demo-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: var(--card-shadow);
+        }
+
+        .demo-controls h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 5px 15px rgba(255, 107, 0, 0.4);
+        }
+
+        .btn:hover {
+            background: #e55a00;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section-title">
+            <h2>Dynamic Product Loading</h2>
+            <p>See how JavaScript can dynamically populate product grids</p>
+        </div>
+
+        <div class="demo-controls">
+            <h3>Demo Controls</h3>
+            <div class="control-group">
+                <label for="productCount">Number of Products to Display:</label>
+                <input type="number" id="productCount" min="1" max="20" value="6">
+            </div>
+            <div class="control-group">
+                <label>Filter by Category:</label>
+                <div class="filter-controls">
+                    <button class="filter-btn active" data-category="all">All Products</button>
+                    <button class="filter-btn" data-category="consoles">Consoles</button>
+                    <button class="filter-btn" data-category="games">Games</button>
+                    <button class="filter-btn" data-category="accessories">Accessories</button>
+                    <button class="filter-btn" data-category="electronics">Electronics</button>
+                </div>
+            </div>
+            <button id="loadProducts" class="btn">Load Products</button>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Products will load here...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample product data - in a real application, this would come from an API or database
+        const products = [
+            {
+                id: 1,
+                name: "PlayStation 5 Console",
+                category: "consoles",
+                price: 1250000,
+                originalPrice: 1400000,
+                image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "New",
+                description: "Next-gen gaming console with ultra-high speed SSD"
+            },
+            {
+                id: 2,
+                name: "DualSense Wireless Controller",
+                category: "accessories",
+                price: 250000,
+                originalPrice: 300000,
+                image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "Sale",
+                description: "Wireless controller with haptic feedback"
+            },
+            {
+                id: 3,
+                name: "God of War: Ragnarök",
+                category: "games",
+                price: 150000,
+                originalPrice: null,
+                image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: null,
+                description: "Epic action-adventure game for PS5"
+            },
+            {
+                id: 4,
+                name: "Wireless Gaming Headset",
+                category: "accessories",
+                price: 180000,
+                originalPrice: 220000,
+                image: "https://images.unsplash.com/photo-1607853554439-0069ec0f29b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "Hot",
+                description: "Immersive wireless gaming headset with 7.1 surround sound"
+            },
+            {
+                id: 5,
+                name: "iPhone 15 Pro Max",
+                category: "electronics",
+                price: 2800000,
+                originalPrice: 3200000,
+                image: "https://images.unsplash.com/photo-1512054502232-10a0a035d672?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: null,
+                description: "Latest iPhone with advanced camera system"
+            },
+            {
+                id: 6,
+                name: "Premium Gaming Chair",
+                category: "accessories",
+                price: 650000,
+                originalPrice: null,
+                image: "https://images.unsplash.com/photo-1600003263720-95b45a4035d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: null,
+                description: "Ergonomic gaming chair with lumbar support"
+            },
+            {
+                id: 7,
+                name: "Xbox Series X",
+                category: "consoles",
+                price: 1100000,
+                originalPrice: 1300000,
+                image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "New",
+                description: "Powerful Xbox console with 4K gaming"
+            },
+            {
+                id: 8,
+                name: "Nintendo Switch OLED",
+                category: "consoles",
+                price: 850000,
+                originalPrice: 950000,
+                image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "Sale",
+                description: "Hybrid gaming console with OLED screen"
+            },
+            {
+                id: 9,
+                name: "Call of Duty: Modern Warfare II",
+                category: "games",
+                price: 145000,
+                originalPrice: null,
+                image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "Bestseller",
+                description: "Latest installment in the Call of Duty franchise"
+            },
+            {
+                id: 10,
+                name: "Samsung Galaxy S23 Ultra",
+                category: "electronics",
+                price: 2350000,
+                originalPrice: 2650000,
+                image: "https://images.unsplash.com/photo-1512054502232-10a0a035d672?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+                badge: "New",
+                description: "Premium Android smartphone with S Pen"
+            }
+        ];
+
+        // DOM elements
+        const productsGrid = document.getElementById('productsGrid');
+        const loadProductsBtn = document.getElementById('loadProducts');
+        const productCountInput = document.getElementById('productCount');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        
+        // Current filter state
+        let currentCategory = 'all';
+        let displayedProducts = 6;
+
+        // Format price with commas for thousands
+        function formatPrice(price) {
+            return 'MK ' + price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Generate HTML for a product card
+        function createProductCard(product) {
+            return `
+                <div class="product-card" data-category="${product.category}">
+                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+                    <div class="product-img">
+                        <img src="${product.image}" alt="${product.name}">
+                    </div>
+                    <div class="product-content">
+                        <span class="product-category">${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</span>
+                        <h3 class="product-title">${product.name}</h3>
+                        <div class="product-price">
+                            <span class="current-price">${formatPrice(product.price)}</span>
+                            ${product.originalPrice ? `<span class="original-price">${formatPrice(product.originalPrice)}</span>` : ''}
+                        </div>
+                        <div class="product-actions">
+                            <button class="action-btn add-to-cart">Add to Cart</button>
+                            <button class="action-btn view-details">Details</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display products based on current filters
+        function displayProducts() {
+            // Show loading state
+            productsGrid.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading products...</p>
+                </div>
+            `;
+            
+            // Simulate loading delay for demo purposes
+            setTimeout(() => {
+                // Clear the grid
+                productsGrid.innerHTML = '';
+                
+                // Filter products based on category
+                const filteredProducts = currentCategory === 'all' 
+                    ? products 
+                    : products.filter(product => product.category === currentCategory);
+                
+                // Limit to the number of products to display
+                const productsToShow = filteredProducts.slice(0, displayedProducts);
+                
+                // Display message if no products found
+                if (productsToShow.length === 0) {
+                    productsGrid.innerHTML = `
+                        <div class="loading">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>No products found in this category.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Add products to the grid
+                productsToShow.forEach(product => {
+                    productsGrid.innerHTML += createProductCard(product);
+                });
+                
+                // Add event listeners to the new buttons
+                document.querySelectorAll('.add-to-cart').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productCard = this.closest('.product-card');
+                        const productName = productCard.querySelector('.product-title').textContent;
+                        alert(`Added ${productName} to cart!`);
+                    });
+                });
+                
+                document.querySelectorAll('.view-details').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productCard = this.closest('.product-card');
+                        const productName = productCard.querySelector('.product-title').textContent;
+                        alert(`Viewing details for ${productName}`);
+                    });
+                });
+            }, 800); // Simulated loading delay
+        }
+
+        // Initialize the page
+        function init() {
+            // Display initial products
+            displayProducts();
+            
+            // Add event listeners
+            loadProductsBtn.addEventListener('click', displayProducts);
+            
+            productCountInput.addEventListener('change', function() {
+                displayedProducts = parseInt(this.value) || 6;
+            });
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update current category
+                    currentCategory = this.getAttribute('data-category');
+                    
+                    // Refresh products
+                    displayProducts();
+                });
+            });
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
