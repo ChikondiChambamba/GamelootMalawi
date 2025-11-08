@@ -1,0 +1,33 @@
+{
+  "dependencies": {
+    "connect-flash": "^0.1.1",
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "flash": "^1.1.0",
+    "method-override": "^3.0.0",
+    "multer": "^2.0.2",
+    "node": "^25.1.0",
+    "nodemon": "^3.1.10"
+  },
+  "name": "nglm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChikondiChambamba/GamelootMalawi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ChikondiChambamba/GamelootMalawi/issues"
+  },
+  "homepage": "https://github.com/ChikondiChambamba/GamelootMalawi#readme"
+}

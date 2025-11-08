@@ -1,0 +1,150 @@
+<div class="checkout-page">
+    <div class="page-header">
+        <h1>Checkout</h1>
+        <div class="breadcrumb">
+            <a href="/">Home</a> / <a href="/cart">Cart</a> / <span>Checkout</span>
+        </div>
+    </div>
+    
+    <div class="checkout-layout">
+        <div class="checkout-form-section">
+            <form id="checkout-form" action="/orders" method="POST">
+                <% if (!currentUser) { %>
+                    <div class="checkout-section">
+                        <h3>Account Information</h3>
+                        <p>Already have an account? <a href="/login">Login here</a></p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+                
+                <div class="checkout-section">
+                    <h3>Shipping Information</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fullName">Full Name *</label>
+                            <input type="text" id="fullName" name="fullName" 
+                                value="<%= currentUser ? currentUser.name : '' %>" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" id="phone" name="phone" 
+                                value="<%= currentUser ? currentUser.phone : '' %>" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address">Shipping Address *</label>
+                        <textarea id="address" name="address" rows="3" required><%= currentUser ? currentUser.address : '' %></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City *</label>
+                            <input type="text" id="city" name="city" value="Lilongwe" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="postalCode">Postal Code</label>
+                            <input type="text" id="postalCode" name="postalCode">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checkout-section">
+                    <h3>Payment Method</h3>
+                    
+                    <div class="payment-options">
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="credit_card" checked>
+                            <div class="payment-option-content">
+                                <i class="far fa-credit-card"></i>
+                                <span>Credit/Debit Card</span>
+                            </div>
+                        </label>
+                        
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="apple_pay">
+                            <div class="payment-option-content">
+                                <i class="fab fa-apple"></i>
+                                <span>Apple Pay</span>
+                            </div>
+                        </label>
+                        
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="shop_pay">
+                            <div class="payment-option-content">
+                                <i class="fas fa-wallet"></i>
+                                <span>Shop Pay</span>
+                            </div>
+                        </label>
+                        
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="cash_on_delivery">
+                            <div class="payment-option-content">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Cash on Delivery</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="checkout-actions">
+                    <a href="/cart" class="btn btn-outline">Back to Cart</a>
+                    <button type="submit" class="btn">Place Order</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="order-summary-section">
+            <div class="order-summary">
+                <h3>Order Summary</h3>
+                
+                <div class="order-items">
+                    <% cart.forEach(item => { %>
+                        <div class="order-item">
+                            <div class="item-image">
+                                <img src="<%= item.image_url %>" alt="<%= item.name %>">
+                            </div>
+                            <div class="item-details">
+                                <h4><%= item.name %></h4>
+                                <p>Qty: <%= item.quantity %></p>
+                            </div>
+                            <div class="item-price">
+                                MK <%= (item.price * item.quantity).toLocaleString() %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                
+                <div class="order-totals">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>MK <%= total.toLocaleString() %></span>
+                    </div>
+                    <div class="total-row">
+                        <span>Shipping:</span>
+                        <span>MK 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Tax:</span>
+                        <span>MK 0.00</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>Total:</span>
+                        <span>MK <%= total.toLocaleString() %></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

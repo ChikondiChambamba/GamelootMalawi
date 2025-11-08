@@ -1,0 +1,161 @@
+<div class="cart-page">
+    <div class="page-header">
+        <h1>Shopping Cart</h1>
+        <div class="breadcrumb">
+            <a href="/">Home</a> / <span>Shopping Cart</span>
+        </div>
+    </div>
+    
+    <% if (cart.length === 0) { %>
+        <div class="empty-cart" style="text-align: center; padding: 4rem 2rem;">
+            <i class="fas fa-shopping-cart" style="font-size: 4rem; color: var(--gray); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--gray); margin-bottom: 1rem;">Your cart is empty</h3>
+            <p style="color: var(--gray); margin-bottom: 2rem;">Add some products to your cart to continue shopping</p>
+            <a href="/shop" class="btn">Continue Shopping</a>
+        </div>
+    <% } else { %>
+        <div class="cart-layout">
+            <div class="cart-items-section">
+                <div class="cart-items">
+                    <% cart.forEach(item => { %>
+                        <div class="cart-item" data-product-id="<%= item.id %>">
+                            <div class="cart-item-img">
+                                <img src="<%= item.image_url %>" alt="<%= item.name %>">
+                            </div>
+                            
+                            <div class="cart-item-info">
+                                <h4 class="cart-item-title"><%= item.name %></h4>
+                                <div class="cart-item-price">MK <%= item.price.toLocaleString() %></div>
+                                
+                                <div class="cart-item-actions">
+                                    <div class="quantity-control">
+                                        <button class="quantity-btn decrease-quantity" data-product-id="<%= item.id %>">-</button>
+                                        <input type="text" class="quantity-input" value="<%= item.quantity %>" data-product-id="<%= item.id %>">
+                                        <button class="quantity-btn increase-quantity" data-product-id="<%= item.id %>">+</button>
+                                    </div>
+                                    <button class="cart-item-remove" data-product-id="<%= item.id %>">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+            
+            <div class="cart-summary">
+                <div class="summary-card">
+                    <h3>Order Summary</h3>
+                    
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span>MK <%= total.toLocaleString() %></span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Shipping:</span>
+                        <span>MK 0.00</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Tax:</span>
+                        <span>MK 0.00</span>
+                    </div>
+                    
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span>MK <%= total.toLocaleString() %></span>
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <a href="/checkout" class="btn checkout-btn" style="width: 100%; text-align: center;">
+                            Proceed to Checkout
+                        </a>
+                        <a href="/shop" class="btn btn-outline" style="width: 100%; text-align: center; margin-top: 1rem;">
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Quantity controls in cart
+        document.querySelectorAll('.decrease-quantity').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+                let qty = parseInt(input.value);
+                
+                if (qty > 1) {
+                    updateCartItem(productId, qty - 1);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.increase-quantity').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+                let qty = parseInt(input.value);
+                
+                updateCartItem(productId, qty + 1);
+            });
+        });
+        
+        // Remove item from cart
+        document.querySelectorAll('.cart-item-remove').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                removeFromCart(productId);
+            });
+        });
+        
+        // Input change handler
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const productId = this.getAttribute('data-product-id');
+                const qty = parseInt(this.value);
+                
+                if (qty > 0) {
+                    updateCartItem(productId, qty);
+                }
+            });
+        });
+    });
+    
+    function updateCartItem(productId, quantity) {
+        fetch('/cart/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId, quantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+    
+    function removeFromCart(productId) {
+        fetch('/cart/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+</script>

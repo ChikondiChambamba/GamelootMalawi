@@ -1,0 +1,145 @@
+<div class="product-detail-page">
+    <div class="breadcrumb">
+        <a href="/">Home</a> / 
+        <a href="/category/<%= product.category_slug %>"><%= product.category_name %></a> / 
+        <span><%= product.name %></span>
+    </div>
+    
+    <div class="detail-container">
+        <div class="detail-content">
+            <div class="detail-img">
+                <img src="<%= product.image_url %>" alt="<%= product.name %>">
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-category"><%= product.category_name %></span>
+                <h1 class="detail-title"><%= product.name %></h1>
+                
+                <div class="detail-price">
+                    <span class="detail-current">MK <%= product.price.toLocaleString() %></span>
+                    <% if (product.original_price && product.original_price > product.price) { %>
+                        <span class="detail-original">MK <%= product.original_price.toLocaleString() %></span>
+                    <% } %>
+                </div>
+                
+                <div class="stock-status">
+                    <% if (product.stock_quantity > 0) { %>
+                        <span class="in-stock"><i class="fas fa-check"></i> In Stock (<%= product.stock_quantity %> available)</span>
+                    <% } else { %>
+                        <span class="out-of-stock"><i class="fas fa-times"></i> Out of Stock</span>
+                    <% } %>
+                </div>
+                
+                <p class="detail-description">
+                    <%= product.description %>
+                </p>
+                
+                <% if (product.stock_quantity > 0) { %>
+                    <div class="detail-actions">
+                        <div class="quantity-control">
+                            <button class="quantity-btn" id="decrease-qty">-</button>
+                            <input type="text" class="quantity-input" value="1" id="product-qty" min="1" max="<%= product.stock_quantity %>">
+                            <button class="quantity-btn" id="increase-qty">+</button>
+                        </div>
+                        <button class="add-to-cart-btn" id="add-to-cart-detail" data-product-id="<%= product.id %>">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                        </button>
+                    </div>
+                <% } %>
+                
+                <% if (product.specifications && product.specifications.length > 0) { %>
+                    <div class="detail-specs">
+                        <h3 class="specs-title">Specifications</h3>
+                        <div class="specs-grid">
+                            <% product.specifications.forEach(spec => { %>
+                                <div class="spec-item">
+                                    <div class="spec-name"><%= spec.name %></div>
+                                    <div class="spec-value"><%= spec.value %></div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    
+    <% if (relatedProducts && relatedProducts.length > 0) { %>
+        <section class="related-products">
+            <div class="section-title">
+                <h2>Related Products</h2>
+                <p>You might also like these products</p>
+            </div>
+            
+            <div class="products-grid">
+                <% relatedProducts.forEach(product => { %>
+                    <div class="product-card" data-product-id="<%= product.id %>">
+                        <% if (product.badge && product.badge !== 'none') { %>
+                            <span class="product-badge <%= product.badge %>">
+                                <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
+                            </span>
+                        <% } %>
+                        
+                        <div class="product-img">
+                            <img src="<%= product.image_url %>" alt="<%= product.name %>">
+                        </div>
+                        
+                        <div class="product-content">
+                            <span class="product-category"><%= product.category_name %></span>
+                            <h3 class="product-title"><%= product.name %></h3>
+                            
+                            <div class="product-price">
+                                <span class="current-price">MK <%= product.price.toLocaleString() %></span>
+                                <% if (product.original_price && product.original_price > product.price) { %>
+                                    <span class="original-price">MK <%= product.original_price.toLocaleString() %></span>
+                                <% } %>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
+                                    Add to Cart
+                                </button>
+                                <a href="/product/<%= product.id %>" class="action-btn view-details">
+                                    Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </section>
+    <% } %>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const decreaseBtn = document.getElementById('decrease-qty');
+        const increaseBtn = document.getElementById('increase-qty');
+        const quantityInput = document.getElementById('product-qty');
+        const addToCartBtn = document.getElementById('add-to-cart-detail');
+        
+        // Quantity controls
+        decreaseBtn.addEventListener('click', function() {
+            let qty = parseInt(quantityInput.value);
+            if (qty > 1) {
+                quantityInput.value = qty - 1;
+            }
+        });
+        
+        increaseBtn.addEventListener('click', function() {
+            let qty = parseInt(quantityInput.value);
+            const maxStock = parseInt(quantityInput.getAttribute('max'));
+            if (qty < maxStock) {
+                quantityInput.value = qty + 1;
+            }
+        });
+        
+        // Add to cart from detail page
+        addToCartBtn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const quantity = parseInt(quantityInput.value);
+            
+            addToCart(productId, quantity);
+        });
+    });
+</script>

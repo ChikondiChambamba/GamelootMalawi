@@ -1,0 +1,65 @@
+<header>
+    <% 
+        const cs = (typeof currentSection !== 'undefined') ? currentSection : '';
+        const st = (typeof searchTerm !== 'undefined') ? searchTerm : '';
+        const cu = (typeof currentUser !== 'undefined') ? currentUser : null;
+        const cc = (typeof cartCount !== 'undefined') ? cartCount : 0;
+    %>
+    <div class="header-container">
+        <div class="logo">
+            <a href="/">
+                <i class="fas fa-gamepad"></i>
+                <h1>GameLootMalawi</h1>
+            </a>
+        </div>
+        
+        <nav>
+            <ul id="nav-menu">
+                <li><a href="/" class="<%= (cs === '' || cs === 'home') ? 'active' : '' %>">Home</a></li>
+                <li><a href="/shop" class="<%= cs === 'shop' ? 'active' : '' %>">Shop</a></li>
+                <li><a href="/category/consoles" class="<%= cs === 'consoles' ? 'active' : '' %>">Consoles</a></li>
+                <li><a href="/category/games" class="<%= cs === 'games' ? 'active' : '' %>">Games</a></li>
+                <li><a href="/category/accessories" class="<%= cs === 'accessories' ? 'active' : '' %>">Accessories</a></li>
+                <li><a href="/category/electronics" class="<%= cs === 'electronics' ? 'active' : '' %>">Electronics</a></li>
+                <li><a href="/shop?category=deals" class="<%= cs === 'deals' ? 'active' : '' %>">Deals</a></li>
+            </ul>
+        </nav>
+        
+                <div class="search-bar">
+            <form action="/shop" method="GET" class="search-form">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" placeholder="Search products..." value="<%= st %>">
+            </form>
+        </div>
+        
+        <div class="nav-icons">
+            <% if (cu) { %>
+                <div class="nav-icon user-dropdown">
+                    <i class="fas fa-user"></i>
+                    <div class="dropdown-content">
+                        <a href="/profile">My Profile</a>
+                        <a href="/orders">My Orders</a>
+                        <form action="/logout" method="POST" style="display: inline;">
+                            <button type="submit" class="logout-btn">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="nav-icon">
+                    <a href="/login" class="auth-link">
+                        <i class="fas fa-user"></i>
+                    </a>
+                </div>
+            <% } %>
+            
+            <div class="nav-icon" id="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count"><%= cc %></span>
+            </div>
+            
+            <div class="mobile-toggle" id="mobile-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </div>
+</header>

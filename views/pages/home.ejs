@@ -1,0 +1,92 @@
+<!-- Hero section -->
+<section class="hero">
+    <div class="hero-content">
+        <h2>PREMIUM GAMING EXPERIENCE IN MALAWI</h2>
+        <p>Discover the latest PlayStation consoles, games, accessories, and top electronics at unbeatable prices. Elevate your gaming setup today!</p>
+        <a href="/shop" class="btn">Shop Now</a>
+        <a href="/shop?category=deals" class="btn btn-outline">View Deals</a>
+    </div>
+</section>
+
+<!-- Categories section -->
+<section class="categories">
+    <div class="section-title">
+        <h2>Shop By Category</h2>
+        <p>Find exactly what you need from our carefully curated collections</p>
+    </div>
+    
+    <div class="categories-grid">
+        <% categories.forEach(category => { %>
+            <div class="category-card">
+                <div class="category-img">
+                    <i class="<%= category.icon %>"></i>
+                </div>
+                <div class="category-content">
+                    <h3><%= category.name %></h3>
+                    <p><%= category.description %></p>
+                    <a href="/category/<%= category.slug %>" class="btn" style="padding: 10px 25px;">Shop Now</a>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</section>
+
+<!-- Featured Products section -->
+<section class="products">
+    <div class="products-header">
+        <div class="section-title" style="text-align: left; margin-bottom: 0;">
+            <h2>Featured Products</h2>
+            <p>Top picks for our gaming community</p>
+        </div>
+        
+        <div class="filter-controls">
+            <button class="filter-btn active">All Products</button>
+            <button class="filter-btn">Consoles</button>
+            <button class="filter-btn">Games</button>
+            <button class="filter-btn">Accessories</button>
+            <button class="filter-btn">Electronics</button>
+            <button class="filter-btn">On Sale</button>
+        </div>
+    </div>
+    
+    <div class="products-grid">
+        <% featuredProducts.forEach(product => { %>
+            <div class="product-card" data-product-id="<%= product.id %>">
+                <% if (product.badge && product.badge !== 'none') { %>
+                    <span class="product-badge <%= product.badge %>">
+                        <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
+                    </span>
+                <% } %>
+                
+                <div class="product-img">
+                    <img src="<%= product.image_url %>" alt="<%= product.name %>">
+                </div>
+                
+                <div class="product-content">
+                    <span class="product-category"><%= product.category_name %></span>
+                    <h3 class="product-title"><%= product.name %></h3>
+                    
+                    <div class="product-price">
+                        <span class="current-price">MK <%= product.price.toLocaleString() %></span>
+                        <% if (product.original_price && product.original_price > product.price) { %>
+                            <span class="original-price">MK <%= product.original_price.toLocaleString() %></span>
+                        <% } %>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
+                            Add to Cart
+                        </button>
+                        <button class="action-btn view-details" data-product-id="<%= product.id %>">
+                            Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+    
+    <div class="view-all-container" style="text-align: center; margin-top: 3rem;">
+        <a href="/shop" class="btn">View All Products</a>
+    </div>
+</section>

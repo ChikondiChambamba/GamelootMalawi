@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head', { title: title || 'GameLootMalawi' }) %>
+</head>
+<body>
+    <!-- Header -->
+    <%- include('partials/header') %>
+
+    <!-- Flash Messages -->
+    <% if (success && success.length > 0) { %>
+        <div class="flash-messages">
+            <% success.forEach(message => { %>
+                <div class="flash-message success">
+                    <i class="fas fa-check-circle"></i>
+                    <%= message %>
+                    <button class="flash-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <% if (error && error.length > 0) { %>
+        <div class="flash-messages">
+            <% error.forEach(message => { %>
+                <div class="flash-message error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <%= message %>
+                    <button class="flash-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <!-- Main Content -->
+    <main>
+        <%- include(content) %>
+    </main>
+
+    <!-- Footer -->
+    <%- include('partials/footer') %>
+
+    <!-- Product Detail Modal -->
+    <div id="product-detail-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modal-product-content"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <%- include('partials/script') %>
+</body>
+</html>

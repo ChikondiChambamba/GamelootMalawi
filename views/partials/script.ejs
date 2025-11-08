@@ -1,0 +1,8 @@
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<script src="/js/cart.js"></script>
+<% if (typeof additionalScripts !== 'undefined') { %>
+    <% additionalScripts.forEach(script => { %>
+        <script src="<%= script %>"></script>
+    <% }) %>
+<% } %>

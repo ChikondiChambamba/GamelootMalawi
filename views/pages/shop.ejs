@@ -1,0 +1,81 @@
+<div class="category-section">
+    <% if (category) { %>
+        <div class="category-banner">
+            <h2><%= category.name %></h2>
+        </div>
+        <p class="category-description">
+            <%= category.description %>
+        </p>
+    <% } else { %>
+        <div class="category-banner">
+            <h2>Shop All Products</h2>
+        </div>
+        <p class="category-description">
+            Explore our complete collection of gaming consoles, video games, accessories, and electronics. 
+            Find everything you need to elevate your gaming experience at competitive prices.
+        </p>
+    <% } %>
+    
+    <div class="products">
+        <div class="products-header">
+            <div class="section-title" style="text-align: left; margin-bottom: 0;">
+                <h2><%= category ? category.name : 'All Products' %></h2>
+                <p><%= products.length %> products found</p>
+            </div>
+            
+            <div class="filter-controls">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">New Arrivals</button>
+                <button class="filter-btn">Best Sellers</button>
+                <button class="filter-btn">Price: Low to High</button>
+                <button class="filter-btn">Price: High to Low</button>
+            </div>
+        </div>
+        
+        <% if (products.length === 0) { %>
+            <div class="no-products" style="text-align: center; padding: 4rem 2rem;">
+                <i class="fas fa-search" style="font-size: 4rem; color: var(--gray); margin-bottom: 1rem;"></i>
+                <h3 style="color: var(--gray); margin-bottom: 1rem;">No products found</h3>
+                <p style="color: var(--gray); margin-bottom: 2rem;">Try adjusting your search or filter criteria</p>
+                <a href="/shop" class="btn">Browse All Products</a>
+            </div>
+        <% } else { %>
+            <div class="products-grid">
+                <% products.forEach(product => { %>
+                    <div class="product-card" data-product-id="<%= product.id %>">
+                        <% if (product.badge && product.badge !== 'none') { %>
+                            <span class="product-badge <%= product.badge %>">
+                                <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
+                            </span>
+                        <% } %>
+                        
+                        <div class="product-img">
+                            <img src="<%= product.image_url %>" alt="<%= product.name %>">
+                        </div>
+                        
+                        <div class="product-content">
+                            <span class="product-category"><%= product.category_name %></span>
+                            <h3 class="product-title"><%= product.name %></h3>
+                            
+                            <div class="product-price">
+                                <span class="current-price">MK <%= product.price.toLocaleString() %></span>
+                                <% if (product.original_price && product.original_price > product.price) { %>
+                                    <span class="original-price">MK <%= product.original_price.toLocaleString() %></span>
+                                <% } %>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
+                                    Add to Cart
+                                </button>
+                                <button class="action-btn view-details" data-product-id="<%= product.id %>">
+                                    Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</div>

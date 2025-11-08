@@ -43,5 +43,45 @@
         </div>
 
     </div>
+
+    <script>
+
+        // Sample product data
+        const products = [
+        {   id: 1,
+            name: "Playstation 5 Console",
+            category: "Consoles",
+            brand: "Sony",
+            price: 2500000,
+            originalPrice: 3000000,
+            image: "https://example.com/ps5.jpg",
+            badge: "New",
+            description: "The latest gaming console with stunning graphics and performance.",
+        }
+    ];
+
+    // DOM Elements
+    const productsGrid = document.querySelector('.products-grid');
+    const loadProductsBtn = document.getElementById('Load-Products');
+    const productCountInput = document.querySelector('product-cout');
+    const filterButtons = document.querySelectorAll('.filter-btn')
+
+    //Current Filter State
+    let currentCategory ='all';
+    let displaydProducts = 6;
+
+    //Format price with commas for better readability
+    function formatPrice(price){
+        return 'MK' +price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    //Generate HTM for a Product card
+    function createProductCard(product){
+        return `
+            <div class = "product-card" data category = "${product.category}">
+                ${product.badge ? `<span class ="product-badge">${product.badge}</span>`: ''}
+                <div class = "product-image">
+                    <img src="${product.image}" alt="${product.name}">
+    </script>
 </body>
 </html>
