@@ -1,0 +1,437 @@
+<%- include('../partials/head', { title: 'Product Management' }) %>
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Product Management</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="fas fa-plus"></i> Add New Product
+            </button>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Featured</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% products.forEach(product => { %>
+                <tr>
+                    <td>
+                        <img src="<%= product.image_url || '/images/no-image.png' %>" 
+                             alt="<%= product.name %>" 
+                             class="img-thumbnail"
+                             style="max-width: 50px;">
+                    </td>
+                    <td><%= product.name %></td>
+                    <td><%= product.category_name %></td>
+                    <td>MWK <%= product.price.toLocaleString() %></td>
+                    <td><%= product.stock_quantity %></td>
+                    <td>
+                        <span class="badge <%= product.is_featured ? 'bg-success' : 'bg-secondary' %>">
+                            <%= product.is_featured ? 'Yes' : 'No' %>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary edit-product" 
+                                data-product='<%= JSON.stringify(product) %>'
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editProductModal">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-product" 
+                                data-product-id="<%= product.id %>"
+                                data-product-name="<%= product.name %>">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProductForm" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category_name" required>
+                                <% categories.forEach(category => { %>
+                                <option value="<%= category.name %>"><%= category.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Price (MWK)</label>
+                            <input type="number" class="form-control" name="price" required min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Original Price (MWK)</label>
+                            <input type="number" class="form-control" name="original_price" min="0">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" class="form-control" name="stock_quantity" required min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Badge</label>
+                            <select class="form-select" name="badge">
+                                <option value="">None</option>
+                                <option value="new">New</option>
+                                <option value="sale">Sale</option>
+                                <option value="hot">Hot</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Short Description</label>
+                        <input type="text" class="form-control" name="short_description">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Full Description</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Product Image</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" required>
+                        <div class="form-text">Max file size: 5MB. Allowed formats: JPG, PNG, GIF</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="is_featured" value="true">
+                            <label class="form-check-label">Featured Product</label>
+                        </div>
+                    </div>
+
+                    <div id="specificationsContainer" class="mb-3">
+                        <label class="form-label">Specifications</label>
+                        <div class="specifications-list"></div>
+                        <button type="button" class="btn btn-sm btn-secondary mt-2" id="addSpecification">
+                            Add Specification
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitAddProduct">Add Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm" enctype="multipart/form-data">
+                    <input type="hidden" name="productId" id="editProductId">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category_name" required>
+                                <% categories.forEach(category => { %>
+                                <option value="<%= category.name %>"><%= category.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Price (MWK)</label>
+                            <input type="number" class="form-control" name="price" required min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Original Price (MWK)</label>
+                            <input type="number" class="form-control" name="original_price" min="0">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" class="form-control" name="stock_quantity" required min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Badge</label>
+                            <select class="form-select" name="badge">
+                                <option value="">None</option>
+                                <option value="new">New</option>
+                                <option value="sale">Sale</option>
+                                <option value="hot">Hot</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Short Description</label>
+                        <input type="text" class="form-control" name="short_description">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Full Description</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Current Image</label>
+                        <div class="current-image-preview mb-2"></div>
+                        <label class="form-label">Update Image</label>
+                        <input type="file" class="form-control" name="image" accept="image/*">
+                        <div class="form-text">Max file size: 5MB. Allowed formats: JPG, PNG, GIF</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="is_featured" value="true">
+                            <label class="form-check-label">Featured Product</label>
+                        </div>
+                    </div>
+
+                    <div id="editSpecificationsContainer" class="mb-3">
+                        <label class="form-label">Specifications</label>
+                        <div class="specifications-list"></div>
+                        <button type="button" class="btn btn-sm btn-secondary mt-2" id="editAddSpecification">
+                            Add Specification
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitEditProduct">Update Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <span id="deleteProductName"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/script') %>
+
+<script>
+// Specification template function
+function createSpecificationRow(name = '', value = '') {
+    return `
+        <div class="specification-row row mb-2">
+            <div class="col-5">
+                <input type="text" class="form-control" placeholder="Name" value="${name}" name="spec_name[]">
+            </div>
+            <div class="col-5">
+                <input type="text" class="form-control" placeholder="Value" value="${value}" name="spec_value[]">
+            </div>
+            <div class="col-2">
+                <button type="button" class="btn btn-danger btn-sm remove-spec">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Add specification handlers
+$('#addSpecification, #editAddSpecification').click(function() {
+    const container = $(this).closest('form').find('.specifications-list');
+    container.append(createSpecificationRow());
+});
+
+// Remove specification handler
+$(document).on('click', '.remove-spec', function() {
+    $(this).closest('.specification-row').remove();
+});
+
+// Add product submit handler
+$('#submitAddProduct').click(function() {
+    const form = document.getElementById('addProductForm');
+    const formData = new FormData(form);
+    
+    // Handle specifications
+    const specifications = [];
+    form.querySelectorAll('.specification-row').forEach(row => {
+        const name = row.querySelector('[name="spec_name[]"]').value;
+        const value = row.querySelector('[name="spec_value[]"]').value;
+        if (name && value) {
+            specifications.push({ name, value });
+        }
+    });
+    formData.set('specifications', JSON.stringify(specifications));
+
+    $.ajax({
+        url: '/api/products',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error occurred'));
+        }
+    });
+});
+
+// Edit product handler
+$('.edit-product').click(function() {
+    const product = JSON.parse($(this).data('product'));
+    const form = document.getElementById('editProductForm');
+    
+    // Fill form fields
+    form.elements.productId.value = product.id;
+    form.elements.name.value = product.name;
+    form.elements.category_name.value = product.category_name;
+    form.elements.price.value = product.price;
+    form.elements.original_price.value = product.original_price;
+    form.elements.stock_quantity.value = product.stock_quantity;
+    form.elements.badge.value = product.badge || '';
+    form.elements.short_description.value = product.short_description || '';
+    form.elements.description.value = product.description;
+    form.elements.is_featured.checked = product.is_featured;
+
+    // Show current image
+    const imagePreview = form.querySelector('.current-image-preview');
+    imagePreview.innerHTML = product.image_url ? 
+        `<img src="${product.image_url}" alt="Current image" style="max-width: 200px;" class="img-thumbnail">` : 
+        '<p>No image</p>';
+
+    // Fill specifications
+    const specsContainer = form.querySelector('.specifications-list');
+    specsContainer.innerHTML = '';
+    if (product.specifications && Array.isArray(product.specifications)) {
+        product.specifications.forEach(spec => {
+            specsContainer.insertAdjacentHTML('beforeend', createSpecificationRow(spec.name, spec.value));
+        });
+    }
+});
+
+// Update product submit handler
+$('#submitEditProduct').click(function() {
+    const form = document.getElementById('editProductForm');
+    const formData = new FormData(form);
+    const productId = form.elements.productId.value;
+    
+    // Handle specifications
+    const specifications = [];
+    form.querySelectorAll('.specification-row').forEach(row => {
+        const name = row.querySelector('[name="spec_name[]"]').value;
+        const value = row.querySelector('[name="spec_value[]"]').value;
+        if (name && value) {
+            specifications.push({ name, value });
+        }
+    });
+    formData.set('specifications', JSON.stringify(specifications));
+
+    $.ajax({
+        url: `/api/products/${productId}`,
+        method: 'PUT',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error occurred'));
+        }
+    });
+});
+
+// Delete product handler
+$('.delete-product').click(function() {
+    const productId = $(this).data('product-id');
+    const productName = $(this).data('product-name');
+    
+    $('#deleteProductName').text(productName);
+    $('#deleteConfirmModal').modal('show');
+    
+    $('#confirmDelete').one('click', function() {
+        $.ajax({
+            url: `/api/products/${productId}`,
+            method: 'DELETE',
+            success: function(response) {
+                if (response.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error occurred'));
+            }
+        });
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

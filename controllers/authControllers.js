@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const env = require('../config/env');
@@ -6,6 +7,49 @@ const env = require('../config/env');
 // Generate JWT token
 const generateToken = (userId) => {
   return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
+};
+
+// Web login handler
+exports.loginHandler = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Find user
+    const user = await User.findByEmail(email);
+    if (!user) {
+      req.flash('error', 'Invalid email or password');
+      return res.redirect('/login');
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      req.flash('error', 'Invalid email or password');
+      return res.redirect('/login');
+    }
+
+    // Set session
+    req.session.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
+
+    req.flash('success', 'Login successful');
+    
+    // Redirect admin users to admin dashboard
+    if (user.role === 'admin') {
+      return res.redirect('/admin/products');
+    }
+    
+    // Redirect regular users to home page
+    res.redirect('/');
+  } catch (error) {
+    console.error('Login error:', error);
+    req.flash('error', 'An error occurred during login');
+    res.redirect('/login');
+  }
 };
 
 // Register new user

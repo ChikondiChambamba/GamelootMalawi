@@ -1,5 +1,16 @@
 const Product = require('../models/Product');
 const { validationResult } = require('express-validator');
+const fs = require('fs');
+const path = require('path');
+
+// Helper function to delete old image
+const deleteOldImage = (imagePath) => {
+  if (!imagePath) return;
+  const fullPath = path.join(__dirname, '../public', imagePath);
+  if (fs.existsSync(fullPath)) {
+    fs.unlinkSync(fullPath);
+  }
+};
 
 // Get all products
 exports.getProducts = async (req, res) => {
@@ -75,6 +86,10 @@ exports.createProduct = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      // If there was a file upload, delete it since validation failed
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -84,7 +99,12 @@ exports.createProduct = async (req, res) => {
 
     const productData = {
       ...req.body,
-      image_url: req.file ? `/uploads/products/${req.file.filename}` : req.body.image_url
+      specifications: req.body.specifications ? JSON.parse(req.body.specifications) : [],
+      price: parseFloat(req.body.price),
+      original_price: parseFloat(req.body.original_price) || parseFloat(req.body.price),
+      stock_quantity: parseInt(req.body.stock_quantity),
+      is_featured: req.body.is_featured === 'true',
+      image_url: req.file ? `/uploads/products/${req.file.filename}` : null
     };
 
     const product = await Product.create(productData);
@@ -95,6 +115,10 @@ exports.createProduct = async (req, res) => {
       data: product
     });
   } catch (error) {
+    // If there was an error and a file was uploaded, delete it
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
     console.error('Create product error:', error);
     res.status(500).json({ 
       success: false, 
@@ -104,31 +128,63 @@ exports.createProduct = async (req, res) => {
 };
 
 // Update product (Admin only)
+// Update product (Admin only)
 exports.updateProduct = async (req, res) => {
   try {
-    const productId = req.params.id;
-    const existingProduct = await Product.findById(productId);
-    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      // If there was a file upload, delete it since validation failed
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const existingProduct = await Product.findById(req.params.id);
     if (!existingProduct) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
       return res.status(404).json({
         success: false,
         message: 'Product not found'
       });
     }
 
-    const updateData = { ...req.body };
+    const productData = {
+      ...req.body,
+      specifications: req.body.specifications ? JSON.parse(req.body.specifications) : existingProduct.specifications,
+      price: parseFloat(req.body.price),
+      original_price: parseFloat(req.body.original_price) || parseFloat(req.body.price),
+      stock_quantity: parseInt(req.body.stock_quantity),
+      is_featured: req.body.is_featured === 'true'
+    };
+
+    // Handle image update
     if (req.file) {
-      updateData.image_url = `/uploads/products/${req.file.filename}`;
+      productData.image_url = `/uploads/products/${req.file.filename}`;
+      // Delete old image if it exists
+      if (existingProduct.image_url) {
+        deleteOldImage(existingProduct.image_url);
+      }
     }
 
-    const product = await Product.update(productId, updateData);
+    const updatedProduct = await Product.update(req.params.id, productData);
 
     res.json({
       success: true,
       message: 'Product updated successfully',
-      data: product
+      data: updatedProduct
     });
   } catch (error) {
+    // If there was an error and a file was uploaded, delete it
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
     console.error('Update product error:', error);
     res.status(500).json({ 
       success: false, 

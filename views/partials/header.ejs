@@ -37,6 +37,15 @@
                 <div class="nav-icon user-dropdown">
                     <i class="fas fa-user"></i>
                     <div class="dropdown-content">
+                        <% if (user && user.is_admin) { %>
+                            <div class="dropdown-section">
+                                <strong class="dropdown-header">Admin</strong>
+                                <a href="/admin/products">Manage Products</a>
+                                <a href="/admin/categories">Manage Categories</a>
+                                <a href="/admin/orders">Manage Orders</a>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                        <% } %>
                         <a href="/profile">My Profile</a>
                         <a href="/orders">My Orders</a>
                         <form action="/logout" method="POST" style="display: inline;">

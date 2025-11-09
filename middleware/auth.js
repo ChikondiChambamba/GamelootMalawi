@@ -2,6 +2,33 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
 
+// Middleware for web session authentication
+const isWebAuth = (req, res, next) => {
+  if (!req.session.user) {
+    req.flash('error', 'Please login to continue');
+    return res.redirect('/login');
+  }
+  next();
+};
+
+// Middleware for admin authentication
+
+// Middleware for checking if user is admin
+const isAdmin = (req, res, next) => {
+  if (!req.session.user) {
+    req.flash('error', 'Please login to continue');
+    return res.redirect('/login');
+  }
+  
+  if (req.session.user.role !== 'admin') {
+    req.flash('error', 'Access denied. Admin privileges required.');
+    return res.redirect('/');
+  }
+  
+  next();
+};
+
+// API authentication middleware
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -37,4 +64,4 @@ const adminAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth, adminAuth };
+module.exports = { isAuth: auth, isAdmin: adminAuth };

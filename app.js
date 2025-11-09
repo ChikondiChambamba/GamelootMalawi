@@ -2,74 +2,15 @@ const express = require('express');
 const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
-const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 
-// Ensure upload directories exist
-const uploadDirs = [
-    path.join(__dirname, 'public/uploads/products'),
-    path.join(__dirname, 'public/uploads/categories')
-];
-
-uploadDirs.forEach(dir => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-});
-
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        let uploadPath = 'public/uploads/';
-        
-        if (req.baseUrl.includes('products')) {
-            uploadPath += 'products/';
-        } else if (req.baseUrl.includes('categories')) {
-            uploadPath += 'categories/';
-        } else {
-            uploadPath += 'general/';
-        }
-        
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const fileExtension = path.extname(file.originalname);
-        cb(null, file.fieldname + '-' + uniqueSuffix + fileExtension);
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    // Check if file is an image
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only image files are allowed!'), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
-    }
-});
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(methodOverride('_method'));
+//app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Default locals middleware - provide safe defaults for templates so partials don't throw ReferenceError
@@ -172,219 +113,14 @@ const mockCategories = [
   { id: 4, name: 'Electronics', description: 'Phones, gadgets & gear', icon: 'fas fa-mobile-alt', slug: 'electronics', products_count: 28 }
 ];
 
-// =============================================
-// PRODUCT MANAGEMENT ROUTES (No admin required)
-// =============================================
-
-// Add Product Form
-app.get('/add-product', (req, res) => {
-    res.render('layout', {
-        title: 'Add Product - GameLootMalawi',
-        content: 'pages/add-product',
-        categories: mockCategories,
-        currentSection: 'add-product'
-    });
-});
-
-// Handle Product Creation with Image Upload
-app.post('/add-product', upload.single('productImage'), (req, res) => {
-    try {
-        const { name, description, shortDescription, price, originalPrice, category, sku, badge, stockQuantity, isFeatured } = req.body;
-        
-        // Validate required fields
-        if (!name || !price || !category) {
-            req.flash('error', 'Name, price, and category are required fields.');
-            return res.redirect('/add-product');
-        }
-
-        // Handle file upload
-        let imageUrl = '';
-        if (req.file) {
-            imageUrl = '/uploads/products/' + req.file.filename;
-        } else {
-            // Use a default image if no file uploaded
-            imageUrl = '/images/default-product.jpg';
-        }
-
-        // Create new product
-        const newProduct = {
-            id: mockProducts.length + 1,
-            name,
-            description,
-            short_description: shortDescription,
-            price: parseFloat(price),
-            original_price: originalPrice ? parseFloat(originalPrice) : null,
-            category_id: parseInt(category),
-            category_name: mockCategories.find(c => c.id === parseInt(category))?.name || 'Uncategorized',
-            category_slug: mockCategories.find(c => c.id === parseInt(category))?.slug || 'uncategorized',
-            image_url: imageUrl,
-            sku,
-            badge: badge || 'none',
-            stock_quantity: parseInt(stockQuantity) || 0,
-            is_featured: isFeatured === 'on',
-            is_active: true,
-            created_at: new Date()
-        };
-
-        // Add to mock data
-        mockProducts.push(newProduct);
-
-        req.flash('success', 'Product added successfully!');
-        res.redirect('/shop');
-    } catch (error) {
-        console.error('Error adding product:', error);
-        req.flash('error', 'Error adding product. Please try again.');
-        res.redirect('/add-product');
-    }
-});
-
-// Edit Product Form
-app.get('/edit-product/:id', (req, res) => {
-    const productId = parseInt(req.params.id);
-    const product = mockProducts.find(p => p.id === productId);
-    
-    if (!product) {
-        req.flash('error', 'Product not found.');
-        return res.redirect('/shop');
-    }
-
-    res.render('layout', {
-        title: 'Edit Product - GameLootMalawi',
-        content: 'pages/edit-product',
-        product,
-        categories: mockCategories,
-        currentSection: 'edit-product'
-    });
-});
-
-// Handle Product Update with Image Upload
-app.post('/edit-product/:id', upload.single('productImage'), (req, res) => {
-    try {
-        const productId = parseInt(req.params.id);
-        const productIndex = mockProducts.findIndex(p => p.id === productId);
-        
-        if (productIndex === -1) {
-            req.flash('error', 'Product not found.');
-            return res.redirect('/shop');
-        }
-
-        const { name, description, shortDescription, price, originalPrice, category, sku, badge, stockQuantity, isFeatured } = req.body;
-
-        // Update product data
-        mockProducts[productIndex] = {
-            ...mockProducts[productIndex],
-            name,
-            description,
-            short_description: shortDescription,
-            price: parseFloat(price),
-            original_price: originalPrice ? parseFloat(originalPrice) : null,
-            category_id: parseInt(category),
-            category_name: mockCategories.find(c => c.id === parseInt(category))?.name || 'Uncategorized',
-            category_slug: mockCategories.find(c => c.id === parseInt(category))?.slug || 'uncategorized',
-            sku,
-            badge: badge || 'none',
-            stock_quantity: parseInt(stockQuantity) || 0,
-            is_featured: isFeatured === 'on',
-            updated_at: new Date()
-        };
-
-        // Handle new image upload
-        if (req.file) {
-            mockProducts[productIndex].image_url = '/uploads/products/' + req.file.filename;
-        }
-
-        req.flash('success', 'Product updated successfully!');
-        res.redirect('/product/' + productId);
-    } catch (error) {
-        console.error('Error updating product:', error);
-        req.flash('error', 'Error updating product. Please try again.');
-        res.redirect(`/edit-product/${req.params.id}`);
-    }
-});
-
-// Delete Product
-app.post('/delete-product/:id', (req, res) => {
-    try {
-        const productId = parseInt(req.params.id);
-        const productIndex = mockProducts.findIndex(p => p.id === productId);
-        
-        if (productIndex === -1) {
-            req.flash('error', 'Product not found.');
-            return res.redirect('/shop');
-        }
-
-        // Remove product from array
-        mockProducts.splice(productIndex, 1);
-
-        req.flash('success', 'Product deleted successfully!');
-        res.redirect('/shop');
-    } catch (error) {
-        console.error('Error deleting product:', error);
-        req.flash('error', 'Error deleting product. Please try again.');
-        res.redirect('/shop');
-    }
-});
-
-// Add Category Form
-app.get('/add-category', (req, res) => {
-    res.render('layout', {
-        title: 'Add Category - GameLootMalawi',
-        content: 'pages/add-category',
-        currentSection: 'add-category'
-    });
-});
-
-// Handle Category Creation with Image Upload
-app.post('/add-category', upload.single('categoryImage'), (req, res) => {
-    try {
-        const { name, description, slug, icon } = req.body;
-        
-        if (!name || !slug) {
-            req.flash('error', 'Name and slug are required fields.');
-            return res.redirect('/add-category');
-        }
-
-        // Handle file upload for category image
-        let imageUrl = '';
-        if (req.file) {
-            imageUrl = '/uploads/categories/' + req.file.filename;
-        }
-
-        // Create new category
-        const newCategory = {
-            id: mockCategories.length + 1,
-            name,
-            description,
-            slug,
-            icon: icon || 'fas fa-folder',
-            image_url: imageUrl,
-            is_active: true,
-            created_at: new Date()
-        };
-
-        mockCategories.push(newCategory);
-
-        req.flash('success', 'Category added successfully!');
-        res.redirect('/shop');
-    } catch (error) {
-        console.error('Error adding category:', error);
-        req.flash('error', 'Error adding category. Please try again.');
-        res.redirect('/add-category');
-    }
-});
-
-// =============================================
-// EXISTING ROUTES (with currentSection added)
-// =============================================
-
+// Routes
 app.get('/', (req, res) => {
   const featuredProducts = mockProducts.filter(p => p.is_featured);
   res.render('layout', {
     title: 'GameLootMalawi - Premium Gaming & Electronics',
     content: 'pages/home',
     featuredProducts,
-    categories: mockCategories,
-    currentSection: 'home'
+    categories: mockCategories
   });
 });
 
@@ -410,8 +146,7 @@ app.get('/shop', (req, res) => {
     products: filteredProducts,
     categories: mockCategories,
     currentCategory: category,
-    searchTerm: search,
-    currentSection: 'shop'
+    searchTerm: search
   });
 });
 
@@ -431,8 +166,7 @@ app.get('/category/:slug', (req, res) => {
     products: categoryProducts,
     categories: mockCategories,
     currentCategory: slug,
-    category,
-    currentSection: slug
+    category
   });
 });
 
@@ -454,8 +188,7 @@ app.get('/product/:id', (req, res) => {
     title: `${product.name} - GameLootMalawi`,
     content: 'pages/product-detail',
     product,
-    relatedProducts,
-    currentSection: product.category_slug
+    relatedProducts
   });
 });
 
@@ -467,8 +200,7 @@ app.get('/cart', (req, res) => {
     title: 'Shopping Cart - GameLootMalawi',
     content: 'pages/cart',
     cart,
-    total,
-    currentSection: 'cart'
+    total
   });
 });
 
@@ -486,8 +218,7 @@ app.get('/checkout', (req, res) => {
     title: 'Checkout - GameLootMalawi',
     content: 'pages/checkout',
     cart,
-    total,
-    currentSection: 'checkout'
+    total
   });
 });
 
@@ -498,8 +229,7 @@ app.get('/login', (req, res) => {
   
   res.render('layout', {
     title: 'Login - GameLootMalawi',
-    content: 'pages/login',
-    currentSection: 'login'
+    content: 'pages/login'
   });
 });
 
@@ -510,8 +240,7 @@ app.get('/register', (req, res) => {
   
   res.render('layout', {
     title: 'Register - GameLootMalawi',
-    content: 'pages/register',
-    currentSection: 'register'
+    content: 'pages/register'
   });
 });
 
@@ -524,8 +253,7 @@ app.get('/profile', (req, res) => {
   res.render('layout', {
     title: 'My Profile - GameLootMalawi',
     content: 'pages/profile',
-    user: req.session.user,
-    currentSection: 'profile'
+    user: req.session.user
   });
 });
 
@@ -537,9 +265,32 @@ app.get('/orders', (req, res) => {
   
   res.render('layout', {
     title: 'My Orders - GameLootMalawi',
-    content: 'pages/orders',
-    currentSection: 'orders'
+    content: 'pages/orders'
   });
+});
+
+// Import middleware and controllers
+const { isAuth, isAdmin } = require('./middleware/auth2');
+const authController = require('./controllers/authControllers');
+const db = require('./config/database');
+const Product = require('./models/Product');
+
+// Admin routes
+app.get('/admin/products', isAdmin, async (req, res) => {
+  try {
+    const products = await Product.findAll({ limit: 100 }); // Get all products for admin
+    const [categories] = await db.execute('SELECT * FROM categories WHERE is_active = TRUE');
+    
+    res.render('pages/admin-products', {
+      products: products.products,
+      categories: categories,
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Admin products page error:', error);
+    req.flash('error', 'Error loading products');
+    res.redirect('/');
+  }
 });
 
 // API Routes for cart operations
@@ -618,33 +369,30 @@ app.post('/cart/remove', (req, res) => {
 });
 
 // Auth routes (simplified - replace with actual API calls)
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  
-  // Simulate API call
-  try {
-    // For demo purposes, create a mock user
-    if (email && password) {
-      req.session.user = {
-        id: 1,
-        name: 'Demo User',
-        email: email,
-        phone: '+265 123 456 789',
-        address: 'Lilongwe, Malawi',
-        role: 'customer'
-      };
-      
-      req.flash('success', 'Login successful!');
-      res.redirect('/profile');
-    } else {
-      req.flash('error', 'Invalid email or password');
-      res.redirect('/login');
-    }
-  } catch (error) {
-    req.flash('error', 'Login failed. Please try again.');
-    res.redirect('/login');
+// Auth routes
+app.get('/login', (req, res) => {
+  if (req.session.user) {
+    return res.redirect('/');
   }
+  res.render('layout', {
+    title: 'Login - GameLootMalawi',
+    content: 'pages/login',
+    user: null
+  });
 });
+
+app.post('/login', authController.loginHandler);
+
+app.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+    }
+    res.redirect('/login');
+  });
+});
+
+// Login route is now handled by authController.loginHandler
 
 app.post('/register', async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
@@ -655,6 +403,9 @@ app.post('/register', async (req, res) => {
   }
   
   try {
+    // In real implementation, call your backend API
+    // const response = await axios.post(`${API_BASE_URL}/auth/register`, { name, email, password });
+    
     // For demo purposes
     req.session.user = {
       id: 1,
@@ -678,28 +429,9 @@ app.post('/logout', (req, res) => {
   res.redirect('/');
 });
 
-// Error handling middleware for file uploads
-app.use((error, req, res, next) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      req.flash('error', 'File too large. Maximum size is 5MB.');
-    } else {
-      req.flash('error', 'File upload error: ' + error.message);
-    }
-  } else if (error) {
-    req.flash('error', error.message);
-  }
-  
-  // Redirect back to the previous page
-  const referer = req.get('Referer') || '/';
-  res.redirect(referer);
-});
-
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Visit: http://localhost:${PORT}`);
-  console.log(`Add products: http://localhost:${PORT}/add-product`);
-  console.log(`Add categories: http://localhost:${PORT}/add-category`);
 });

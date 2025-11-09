@@ -22,15 +22,15 @@ class User {
 
   // Create new user
   static async create(userData) {
-    const { name, email, password, phone, address } = userData;
+    const { name, email, password, phone, address, role = 'customer' } = userData;
     
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const [result] = await db.execute(`
-      INSERT INTO users (name, email, password, phone, address) 
-      VALUES (?, ?, ?, ?, ?)
-    `, [name, email, hashedPassword, phone, address]);
+      INSERT INTO users (name, email, password, phone, address, role) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [name, email, hashedPassword, phone, address, role]);
 
     return this.findById(result.insertId);
   }
