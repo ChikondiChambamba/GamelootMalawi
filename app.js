@@ -120,7 +120,8 @@ app.get('/', (req, res) => {
     title: 'GameLootMalawi - Premium Gaming & Electronics',
     content: 'pages/home',
     featuredProducts,
-    categories: mockCategories
+    categories: mockCategories,
+    currentUser: req.session.user
   });
 });
 
@@ -276,19 +277,116 @@ const db = require('./config/database');
 const Product = require('./models/Product');
 
 // Admin routes
+// Handle file uploads for products
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/uploads/products/')
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, uniqueSuffix + '-' + file.originalname)
+  }
+});
+const upload = multer({ storage: storage });
+
+app.post('/admin/products', isAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const productData = {
+      ...req.body,
+      image_url: req.file ? '/uploads/products/' + req.file.filename : null,
+      price: parseFloat(req.body.price),
+      original_price: req.body.original_price ? parseFloat(req.body.original_price) : null,
+      stock_quantity: parseInt(req.body.stock_quantity),
+      is_featured: req.body.is_featured === 'true',
+      category_id: parseInt(req.body.category_id)
+    };
+
+    const product = await Product.create(productData);
+    
+    res.json({
+      success: true,
+      message: 'Product added successfully',
+      product: product
+    });
+  } catch (error) {
+    console.error('Error adding product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding product'
+    });
+  }
+});
+
 app.get('/admin/products', isAdmin, async (req, res) => {
   try {
-    const products = await Product.findAll({ limit: 100 }); // Get all products for admin
-    const [categories] = await db.execute('SELECT * FROM categories WHERE is_active = TRUE');
+    console.log('Loading admin products page...');
     
-    res.render('pages/admin-products', {
-      products: products.products,
-      categories: categories,
-      user: req.session.user
+    // Get products with proper error handling
+    let productsList = [];
+    try {
+      const products = await Product.findAll({ limit: 100 }); // Get all products for admin
+      productsList = products.products || [];
+      console.log(`Found ${productsList.length} products`);
+    } catch (err) {
+      console.error('Error loading products:', err);
+      // Continue with empty products list
+    }
+
+    // Get categories with proper error handling
+    let categoriesList = [];
+    try {
+      const [categories] = await db.execute('SELECT * FROM categories WHERE is_active = TRUE');
+      categoriesList = categories || [];
+      console.log(`Found ${categoriesList.length} categories`);
+    } catch (err) {
+      console.error('Error loading categories:', err);
+      // Continue with empty categories list
+    }
+    
+    res.render('layout', {
+      title: 'Product Management - Admin',
+      content: 'pages/admin-products',
+      products: productsList,
+      categories: categoriesList,
+      success: req.flash('success'),
+      error: req.flash('error'),
+      currentUser: req.session.user
     });
   } catch (error) {
     console.error('Admin products page error:', error);
-    req.flash('error', 'Error loading products');
+    req.flash('error', 'Error loading admin page');
+    res.redirect('/');
+  }
+});
+
+// Admin Categories Route
+app.get('/admin/categories', isAdmin, async (req, res) => {
+  try {
+    console.log('Loading admin categories page...');
+    
+    // Get categories with proper error handling
+    let categoriesList = [];
+    try {
+      const [categories] = await db.execute('SELECT * FROM categories ORDER BY name ASC');
+      categoriesList = categories || [];
+      console.log(`Found ${categoriesList.length} categories for management`);
+    } catch (err) {
+      console.error('Error loading categories:', err);
+      req.flash('error', 'Error loading categories');
+    }
+    
+    res.render('layout', {
+      title: 'Category Management - Admin',
+      content: 'pages/admin-categories',
+      categories: categoriesList,
+      success: req.flash('success'),
+      error: req.flash('error'),
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Admin categories page error:', error);
+    req.flash('error', 'Error loading categories page');
     res.redirect('/');
   }
 });

@@ -2,8 +2,12 @@ const db = require('../config/database');
 
 class Product {
   // Get all products with pagination and filtering
-  static async findAll({ page = 1, limit = 10, category = null, search = null, featured = null }) {
-    const offset = (page - 1) * limit;
+  static async findAll({ page = 1, limit = 10, category = null, search = null, featured = null } = {}) {
+    // coerce and guard numeric inputs
+    page = parseInt(page, 10) || 1;
+    limit = parseInt(limit, 10) || 10;
+    const offset = Math.max(0, (page - 1) * limit);
+
     let query = `
       SELECT p.*, c.name as category_name, c.slug as category_slug 
       FROM products p 
@@ -22,9 +26,11 @@ class Product {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    if (featured !== null) {
+    if (featured !== null && featured !== undefined) {
+      // normalize featured to 0/1
+      const f = (featured === true || featured === 1 || featured === '1' || featured === 'true') ? 1 : 0;
       query += ' AND p.is_featured = ?';
-      params.push(featured);
+      params.push(f);
     }
 
     query += ' ORDER BY p.created_at DESC LIMIT ? OFFSET ?';
@@ -52,8 +58,8 @@ class Product {
     return {
       products,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: page,
+        limit: limit,
         total,
         pages: Math.ceil(total / limit)
       }

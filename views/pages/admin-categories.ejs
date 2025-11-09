@@ -1,0 +1,134 @@
+<div class="mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Category Management</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus"></i> Add New Category
+            </button>
+        </div>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% categories.forEach(category => { %>
+                <tr>
+                    <td>
+                        <i class="<%= category.icon || 'fas fa-folder' %>"></i>
+                    </td>
+                    <td><%= category.name %></td>
+                    <td><%= category.slug %></td>
+                    <td><%= category.description %></td>
+                    <td>
+                        <span class="badge <%= category.is_active ? 'bg-success' : 'bg-secondary' %>">
+                            <%= category.is_active ? 'Active' : 'Inactive' %>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary edit-category" 
+                                data-category='<%= JSON.stringify(category) %>'
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editCategoryModal">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-category" 
+                                data-category-id="<%= category.id %>"
+                                data-category-name="<%= category.name %>">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoryForm">
+                    <div class="mb-3">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon Class (FontAwesome)</label>
+                        <input type="text" class="form-control" name="icon" placeholder="fas fa-folder">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="is_active" checked>
+                            <label class="form-check-label">Active</label>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCategoryForm">
+                    <input type="hidden" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon Class (FontAwesome)</label>
+                        <input type="text" class="form-control" name="icon">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="is_active">
+                            <label class="form-check-label">Active</label>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
