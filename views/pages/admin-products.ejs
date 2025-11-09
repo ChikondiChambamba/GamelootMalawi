@@ -77,11 +77,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Category</label>
-                            <select class="form-select" name="category_name" required>
-                                <% categories.forEach(category => { %>
-                                <option value="<%= category.name %>"><%= category.name %></option>
-                                <% }); %>
-                            </select>
+                                <select class="form-select" name="category_id" required>
+                                    <% categories.forEach(category => { %>
+                                    <option value="<%= category.id %>"><%= category.name %></option>
+                                    <% }); %>
+                                </select>
                         </div>
                     </div>
 
@@ -317,7 +317,7 @@ $('#submitAddProduct').click(function() {
     formData.set('specifications', JSON.stringify(specifications));
 
     $.ajax({
-        url: '/api/products',
+        url: '/admin/products',
         method: 'POST',
         data: formData,
         processData: false,
@@ -386,7 +386,7 @@ $('#submitEditProduct').click(function() {
     formData.set('specifications', JSON.stringify(specifications));
 
     $.ajax({
-        url: `/api/products/${productId}`,
+        url: `/admin/products/${productId}`,
         method: 'PUT',
         data: formData,
         processData: false,
@@ -414,7 +414,7 @@ $('.delete-product').click(function() {
     
     $('#confirmDelete').one('click', function() {
         $.ajax({
-            url: `/api/products/${productId}`,
+            url: `/admin/products/${productId}`,
             method: 'DELETE',
             success: function(response) {
                 if (response.success) {

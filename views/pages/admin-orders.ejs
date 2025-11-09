@@ -1,0 +1,78 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Order Management</h2>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Total (MWK)</th>
+          <th>Status</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (orders && orders.length > 0) { %>
+          <% orders.forEach(order => { %>
+            <tr>
+              <td><%= order.order_number || ('#' + order.id) %></td>
+              <td><%= order.customer_name %> (<%= order.customer_email %>)</td>
+              <td>MWK <%= (order.total_amount || 0).toLocaleString() %></td>
+              <td><span class="badge <%= order.status === 'delivered' ? 'bg-success' : (order.status === 'cancelled' ? 'bg-danger' : 'bg-secondary') %>"><%= order.status || 'pending' %></span></td>
+              <td><%= new Date(order.created_at).toLocaleString() %></td>
+              <td>
+                <button class="btn btn-sm btn-primary view-order" data-order-id="<%= order.id %>">View</button>
+                <button class="btn btn-sm btn-secondary change-status" data-order-id="<%= order.id %>">Change Status</button>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="6">No orders found.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/script') %>
+
+<script>
+// Basic client-side handlers (placeholder)
+document.addEventListener('click', function(e) {
+  const viewBtn = e.target.closest('.view-order');
+  if (viewBtn) {
+    const id = viewBtn.dataset.orderId;
+    // For now open order detail in a new tab (API exists at /orders/:id)
+    window.open('/orders/' + id, '_blank');
+  }
+
+  const statusBtn = e.target.closest('.change-status');
+  if (statusBtn) {
+    const id = statusBtn.dataset.orderId;
+    const newStatus = prompt('Enter new status (pending, confirmed, shipped, delivered, cancelled):');
+    if (!newStatus) return;
+
+    fetch('/admin/orders/' + id + '/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    }).then(res => res.json()).then(json => {
+      if (json.success) {
+        alert('Status updated');
+        location.reload();
+      } else {
+        alert('Error: ' + (json.message || 'Could not update status'));
+      }
+    }).catch(err => {
+      console.error(err);
+      alert('Request failed');
+    });
+  }
+});
+</script>

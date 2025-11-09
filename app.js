@@ -275,6 +275,7 @@ const { isAuth, isAdmin } = require('./middleware/auth2');
 const authController = require('./controllers/authControllers');
 const db = require('./config/database');
 const Product = require('./models/Product');
+const Order = require('./models/order');
 
 // Admin routes
 // Handle file uploads for products
@@ -292,14 +293,30 @@ const upload = multer({ storage: storage });
 
 app.post('/admin/products', isAdmin, upload.single('image'), async (req, res) => {
   try {
+    // Parse specifications if provided as JSON string
+    let specifications = [];
+    if (req.body.specifications) {
+      try {
+        specifications = typeof req.body.specifications === 'string' ? JSON.parse(req.body.specifications) : req.body.specifications;
+      } catch (e) {
+        console.warn('Invalid specifications JSON, ignoring');
+      }
+    }
+
     const productData = {
-      ...req.body,
-      image_url: req.file ? '/uploads/products/' + req.file.filename : null,
-      price: parseFloat(req.body.price),
+      name: req.body.name,
+      description: req.body.description,
+      short_description: req.body.short_description,
+      price: parseFloat(req.body.price) || 0,
       original_price: req.body.original_price ? parseFloat(req.body.original_price) : null,
-      stock_quantity: parseInt(req.body.stock_quantity),
-      is_featured: req.body.is_featured === 'true',
-      category_id: parseInt(req.body.category_id)
+      stock_quantity: parseInt(req.body.stock_quantity) || 0,
+      is_featured: req.body.is_featured === 'true' || req.body.is_featured === 'on' || req.body.is_featured === true,
+      category_id: parseInt(req.body.category_id) || null,
+      badge: req.body.badge || null,
+      sku: req.body.sku || null,
+      image_url: req.file ? '/uploads/products/' + req.file.filename : null,
+      specifications: specifications,
+      images: []
     };
 
     const product = await Product.create(productData);
@@ -315,6 +332,60 @@ app.post('/admin/products', isAdmin, upload.single('image'), async (req, res) =>
       success: false,
       message: 'Error adding product'
     });
+  }
+});
+
+// Update product
+app.put('/admin/products/:id', isAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    // Parse specifications
+    let specifications = [];
+    if (req.body.specifications) {
+      try {
+        specifications = typeof req.body.specifications === 'string' ? JSON.parse(req.body.specifications) : req.body.specifications;
+      } catch (e) {
+        console.warn('Invalid specifications JSON on update, ignoring');
+      }
+    }
+
+    const productData = {
+      name: req.body.name,
+      description: req.body.description,
+      short_description: req.body.short_description,
+      price: req.body.price ? parseFloat(req.body.price) : undefined,
+      original_price: req.body.original_price ? parseFloat(req.body.original_price) : undefined,
+      stock_quantity: req.body.stock_quantity ? parseInt(req.body.stock_quantity) : undefined,
+      is_featured: (req.body.is_featured === 'true' || req.body.is_featured === 'on') ? 1 : 0,
+      category_id: req.body.category_id ? parseInt(req.body.category_id) : undefined,
+      badge: req.body.badge || undefined,
+      sku: req.body.sku || undefined,
+      specifications: specifications.length ? specifications : undefined
+    };
+
+    if (req.file) {
+      productData.image_url = '/uploads/products/' + req.file.filename;
+    }
+
+    const updated = await Product.update(id, productData);
+
+    res.json({ success: true, message: 'Product updated', product: updated });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ success: false, message: 'Error updating product' });
+  }
+});
+
+// Delete product (soft delete)
+app.delete('/admin/products/:id', isAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await Product.delete(id);
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ success: false, message: 'Error deleting product' });
   }
 });
 
@@ -532,4 +603,50 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Visit: http://localhost:${PORT}`);
+});
+
+// Admin Orders Page
+app.get('/admin/orders', isAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const orders = await Order.findAll({ page: parseInt(page), limit: parseInt(limit) });
+
+    res.render('layout', {
+      title: 'Order Management - Admin',
+      content: 'pages/admin-orders',
+      orders: orders,
+      success: req.flash('success'),
+      error: req.flash('error'),
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Admin orders page error:', error);
+    req.flash('error', 'Error loading orders');
+    res.redirect('/');
+  }
+});
+
+// Admin update order status (session-based)
+app.put('/admin/orders/:id/status', isAdmin, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { status } = req.body;
+
+    // Basic validation
+    const valid = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+    if (!valid.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const existingOrder = await Order.findById(orderId);
+    if (!existingOrder) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const updated = await Order.updateStatus(orderId, status);
+    res.json({ success: true, message: 'Status updated', data: updated });
+  } catch (error) {
+    console.error('Error updating order status (admin):', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 });
