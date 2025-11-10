@@ -81,15 +81,20 @@ class Order {
 
   // Find orders by user ID
   static async findByUserId(userId, { page = 1, limit = 10 } = {}) {
-    const offset = (page - 1) * limit;
+    // Coerce numeric inputs and inline them into the query to avoid
+    // drivers that don't accept placeholders for LIMIT/OFFSET.
+    const pageNum = Number.isFinite(Number(page)) ? parseInt(page, 10) : 1;
+    const lim = Number.isFinite(Number(limit)) ? parseInt(limit, 10) : 10;
+    const offset = Math.max(0, (pageNum - 1) * lim);
 
-    const [orders] = await db.execute(`
-      SELECT o.* FROM orders o 
-      WHERE o.user_id = ? 
-      ORDER BY o.created_at DESC 
-      LIMIT ? OFFSET ?
-    `, [userId, limit, offset]);
+    const sql = `
+      SELECT o.* FROM orders o
+      WHERE o.user_id = ?
+      ORDER BY o.created_at DESC
+      LIMIT ${Number(lim)} OFFSET ${Number(offset)}
+    `;
 
+    const [orders] = await db.execute(sql, [userId]);
     return orders;
   }
 
@@ -101,7 +106,6 @@ class Order {
 
   // Get all orders (admin)
   static async findAll({ page = 1, limit = 10, status = null } = {}) {
-    const offset = (page - 1) * limit;
     
     let query = 'SELECT o.* FROM orders o WHERE 1=1';
     const params = [];
@@ -111,8 +115,12 @@ class Order {
       params.push(status);
     }
 
-    query += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    // Coerce numeric values and inline them to avoid binding issues
+    const lim = Number.isFinite(Number(limit)) ? parseInt(limit, 10) : 10;
+    const pageNum = Number.isFinite(Number(page)) ? parseInt(page, 10) : 1;
+    const offset = Math.max(0, (pageNum - 1) * lim);
+
+    query += ` ORDER BY o.created_at DESC LIMIT ${Number(lim)} OFFSET ${Number(offset)}`;
 
     const [orders] = await db.execute(query, params);
     return orders;

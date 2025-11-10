@@ -25,3 +25,8 @@ router.put('/:id', adminAuth, upload.single('image'), productController.updatePr
 router.delete('/:id', adminAuth, productController.deleteProduct);
 
 module.exports = router;
+
+// Pagination guards
+page = parseInt(page, 10) || 1;
+limit = parseInt(limit, 10) || 10;
+const offset = Math.max(0, (page - 1) * limit);

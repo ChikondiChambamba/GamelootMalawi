@@ -36,7 +36,58 @@
     <div class="products-header">
         <div class="section-title" style="text-align: left; margin-bottom: 0;">
             <h2>Featured Products</h2>
-            <p>Top picks for our gaming community</p>
+            <p>Our handpicked premium selections</p>
+        </div>
+    </div>
+    
+    <div class="products-grid">
+        <% if (featuredProducts.length > 0) { %>
+            <% featuredProducts.forEach(product => { %>
+                <div class="product-card" data-product-id="<%= product.id %>">
+                    <% if (product.badge && product.badge !== 'none') { %>
+                        <span class="product-badge <%= product.badge %>">
+                            <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
+                        </span>
+                    <% } %>
+                    
+                    <div class="product-img">
+                        <img src="<%= product.image_url %>" alt="<%= product.name %>">
+                    </div>
+                    
+                    <div class="product-content">
+                        <span class="product-category"><%= product.category_name %></span>
+                        <h3 class="product-title"><%= product.name %></h3>
+                        
+                        <div class="product-price">
+                            <span class="current-price">MK <%= product.price.toLocaleString() %></span>
+                            <% if (product.original_price && product.original_price > product.price) { %>
+                                <span class="original-price">MK <%= product.original_price.toLocaleString() %></span>
+                            <% } %>
+                        </div>
+                        
+                        <div class="product-actions">
+                            <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
+                                Add to Cart
+                            </button>
+                            <button class="action-btn view-details" data-product-id="<%= product.id %>">
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p class="no-products">No featured products available at the moment.</p>
+        <% } %>
+    </div>
+</section>
+
+<!-- All Products section -->
+<section class="products">
+    <div class="products-header">
+        <div class="section-title" style="text-align: left; margin-bottom: 0;">
+            <h2>Latest Products</h2>
+            <p>Browse our newest arrivals</p>
         </div>
         
         <div class="filter-controls">
@@ -50,40 +101,44 @@
     </div>
     
     <div class="products-grid">
-        <% featuredProducts.forEach(product => { %>
-            <div class="product-card" data-product-id="<%= product.id %>">
-                <% if (product.badge && product.badge !== 'none') { %>
-                    <span class="product-badge <%= product.badge %>">
-                        <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
-                    </span>
-                <% } %>
-                
-                <div class="product-img">
-                    <img src="<%= product.image_url %>" alt="<%= product.name %>">
-                </div>
-                
-                <div class="product-content">
-                    <span class="product-category"><%= product.category_name %></span>
-                    <h3 class="product-title"><%= product.name %></h3>
+        <% if (allProducts.length > 0) { %>
+            <% allProducts.forEach(product => { %>
+                <div class="product-card" data-product-id="<%= product.id %>">
+                    <% if (product.badge && product.badge !== 'none') { %>
+                        <span class="product-badge <%= product.badge %>">
+                            <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
+                        </span>
+                    <% } %>
                     
-                    <div class="product-price">
-                        <span class="current-price">MK <%= product.price.toLocaleString() %></span>
-                        <% if (product.original_price && product.original_price > product.price) { %>
-                            <span class="original-price">MK <%= product.original_price.toLocaleString() %></span>
-                        <% } %>
+                    <div class="product-img">
+                        <img src="<%= product.image_url %>" alt="<%= product.name %>">
                     </div>
                     
-                    <div class="product-actions">
-                        <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
-                            Add to Cart
-                        </button>
-                        <button class="action-btn view-details" data-product-id="<%= product.id %>">
-                            Details
-                        </button>
+                    <div class="product-content">
+                        <span class="product-category"><%= product.category_name %></span>
+                        <h3 class="product-title"><%= product.name %></h3>
+                        
+                        <div class="product-price">
+                            <span class="current-price">MK <%= product.price.toLocaleString() %></span>
+                            <% if (product.original_price && product.original_price > product.price) { %>
+                                <span class="original-price">MK <%= product.original_price.toLocaleString() %></span>
+                            <% } %>
+                        </div>
+                        
+                        <div class="product-actions">
+                            <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
+                                Add to Cart
+                            </button>
+                            <button class="action-btn view-details" data-product-id="<%= product.id %>">
+                                Details
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        <% }) %>
+            <% }) %>
+        <% } else { %>
+            <p class="no-products">No products available at the moment.</p>
+        <% } %>
     </div>
     
     <div class="view-all-container" style="text-align: center; margin-top: 3rem;">

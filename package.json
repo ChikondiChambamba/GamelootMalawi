@@ -33,5 +33,6 @@
   "bugs": {
     "url": "https://github.com/ChikondiChambamba/GamelootMalawi/issues"
   },
-  "homepage": "https://github.com/ChikondiChambamba/GamelootMalawi#readme"
+  "homepage": "https://github.com/ChikondiChambamba/GamelootMalawi#readme",
+  "devDependencies": {}
 }
