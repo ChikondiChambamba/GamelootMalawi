@@ -199,11 +199,22 @@ class Product {
 
     values.push(id);
 
-    await db.execute(`
-      UPDATE products 
-      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+    const sql = `
+      UPDATE products
+      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, values);
+    `;
+
+    try {
+      console.log('Product.update SQL:', sql);
+      console.log('Product.update values:', values);
+      await db.execute(sql, values);
+    } catch (err) {
+      console.error('Product.update SQL error:', err);
+      console.error('Product.update SQL:', sql);
+      console.error('Product.update values:', values);
+      throw err;
+    }
 
     return this.findById(id);
   }

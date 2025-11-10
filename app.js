@@ -384,6 +384,19 @@ app.put('/admin/products/:id', isAdmin, upload.single('image'), async (req, res)
       }
     }
 
+    // Resolve category: some admin forms submit `category_name` instead of `category_id`.
+    let resolvedCategoryId = undefined;
+    if (req.body.category_id) {
+      resolvedCategoryId = parseInt(req.body.category_id);
+    } else if (req.body.category_name) {
+      try {
+        const [catRows] = await db.execute('SELECT id FROM categories WHERE name = ? LIMIT 1', [req.body.category_name]);
+        if (Array.isArray(catRows) && catRows.length) resolvedCategoryId = catRows[0].id;
+      } catch (e) {
+        console.warn('Could not resolve category_name to id on product update', req.body.category_name, e);
+      }
+    }
+
     const productData = {
       name: req.body.name,
       description: req.body.description,
@@ -392,7 +405,7 @@ app.put('/admin/products/:id', isAdmin, upload.single('image'), async (req, res)
       original_price: req.body.original_price ? parseFloat(req.body.original_price) : undefined,
       stock_quantity: req.body.stock_quantity ? parseInt(req.body.stock_quantity) : undefined,
       is_featured: (req.body.is_featured === 'true' || req.body.is_featured === 'on') ? 1 : 0,
-      category_id: req.body.category_id ? parseInt(req.body.category_id) : undefined,
+      category_id: resolvedCategoryId !== undefined ? resolvedCategoryId : undefined,
       badge: req.body.badge || undefined,
       sku: req.body.sku || undefined,
       specifications: specifications.length ? specifications : undefined
@@ -402,7 +415,9 @@ app.put('/admin/products/:id', isAdmin, upload.single('image'), async (req, res)
       productData.image_url = '/uploads/products/' + req.file.filename;
     }
 
+    console.log('Admin update product payload for id=' + id + ':', productData);
     const updated = await Product.update(id, productData);
+    console.log('Product.update returned:', updated);
 
     res.json({ success: true, message: 'Product updated', product: updated });
   } catch (error) {
