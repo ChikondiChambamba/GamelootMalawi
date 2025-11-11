@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
   // currentUser and cartCount may come from session if sessions are enabled
   res.locals.currentUser = (req.session && req.session.user) ? req.session.user : null;
-  res.locals.cartCount = (req.session && req.session.cart) ? req.session.cart.length : 0;
+  res.locals.cartCount = 0; // Will be updated in the async middleware below
   // search term can come from querystring
   res.locals.searchTerm = (req.query && req.query.search) ? req.query.search : '';
   // currentSection can be set per-route; default to empty string
@@ -51,11 +51,24 @@ app.use(session({
 app.use(flash());
 
 // Global variables
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.currentUser = req.session.user || null;
-  res.locals.cartCount = req.session.cart ? req.session.cart.length : 0;
+  
+  // Set cart count based on whether user is logged in
+  if (req.session.user) {
+    try {
+      const Cart = require('./models/Cart');
+      res.locals.cartCount = await Cart.getCartCount(req.session.user.id);
+    } catch (err) {
+      console.error('Error getting cart count:', err);
+      res.locals.cartCount = 0;
+    }
+  } else {
+    res.locals.cartCount = 0;
+  }
+  
   next();
 });
 
@@ -229,34 +242,64 @@ app.get('/product/:id', async (req, res) => {
   }
 });
 
-app.get('/cart', (req, res) => {
-  const cart = req.session.cart || [];
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
-  res.render('layout', {
-    title: 'Shopping Cart - GameLootMalawi',
-    content: 'pages/cart',
-    cart,
-    total
-  });
+app.get('/cart', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    req.flash('error', 'Please login to view your cart');
+    return res.redirect('/login');
+  }
+
+  try {
+    const Cart = require('./models/Cart');
+    
+    // Get user's cart items from database
+    const cartItems = await Cart.getCartItems(req.session.user.id);
+    const total = await Cart.getCartTotal(req.session.user.id);
+    
+    res.render('layout', {
+      title: 'Shopping Cart - GameLootMalawi',
+      content: 'pages/cart',
+      cart: cartItems || [],
+      total: total || 0
+    });
+  } catch (err) {
+    console.error('Cart page error:', err);
+    req.flash('error', 'Error loading cart');
+    res.redirect('/');
+  }
 });
 
-app.get('/checkout', (req, res) => {
-  const cart = req.session.cart || [];
-  
-  if (cart.length === 0) {
-    req.flash('error', 'Your cart is empty');
-    return res.redirect('/cart');
+app.get('/checkout', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    req.flash('error', 'Please login to checkout');
+    return res.redirect('/login');
   }
-  
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
-  res.render('layout', {
-    title: 'Checkout - GameLootMalawi',
-    content: 'pages/checkout',
-    cart,
-    total
-  });
+
+  try {
+    const Cart = require('./models/Cart');
+    
+    // Get user's cart items from database
+    const cartItems = await Cart.getCartItems(req.session.user.id);
+    
+    if (cartItems.length === 0) {
+      req.flash('error', 'Your cart is empty');
+      return res.redirect('/cart');
+    }
+    
+    const total = await Cart.getCartTotal(req.session.user.id);
+    
+    res.render('layout', {
+      title: 'Checkout - GameLootMalawi',
+      content: 'pages/checkout',
+      cart: cartItems || [],
+      total: total || 0
+    });
+  } catch (err) {
+    console.error('Checkout page error:', err);
+    req.flash('error', 'Error loading checkout');
+    res.redirect('/cart');
+  }
 });
 
 app.get('/login', (req, res) => {
@@ -513,74 +556,88 @@ app.get('/admin/categories', isAdmin, async (req, res) => {
 
 // API Routes for cart operations
 app.post('/cart/add', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    return res.json({ success: false, message: 'Please login to add items to cart', requireLogin: true });
+  }
+
   const { productId, quantity = 1 } = req.body;
   try {
+    const Cart = require('./models/Cart');
+    
     const product = await Product.findById(productId);
     if (!product) {
       return res.json({ success: false, message: 'Product not found' });
     }
 
-    if (!req.session.cart) req.session.cart = [];
-
-    const existingItem = req.session.cart.find(item => item.id === product.id);
-    if (existingItem) {
-      existingItem.quantity += parseInt(quantity);
-    } else {
-      req.session.cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image_url: product.image_url,
-        quantity: parseInt(quantity),
-        stock: product.stock_quantity
-      });
+    // Check stock availability
+    if (product.stock_quantity < quantity) {
+      return res.json({ success: false, message: 'Insufficient stock available' });
     }
 
-    res.json({ success: true, message: 'Product added to cart', cartCount: req.session.cart.length });
+    // Add to database cart
+    await Cart.addItem(req.session.user.id, productId, parseInt(quantity));
+
+    // Get updated cart count
+    const cartCount = await Cart.getCartCount(req.session.user.id);
+
+    res.json({ success: true, message: 'Product added to cart', cartCount });
   } catch (err) {
     console.error('Cart add error:', err);
     res.json({ success: false, message: 'Error adding to cart' });
   }
 });
 
-app.post('/cart/update', (req, res) => {
+app.post('/cart/update', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    return res.json({ success: false, message: 'Please login to update cart' });
+  }
+
   const { productId, quantity } = req.body;
 
-  if (!req.session.cart) {
-    return res.json({ success: false, message: 'Cart is empty' });
+  try {
+    const Cart = require('./models/Cart');
+
+    await Cart.updateQuantity(req.session.user.id, parseInt(productId), parseInt(quantity));
+
+    const cartCount = await Cart.getCartCount(req.session.user.id);
+
+    res.json({
+      success: true,
+      message: 'Cart updated',
+      cartCount
+    });
+  } catch (err) {
+    console.error('Cart update error:', err);
+    res.json({ success: false, message: 'Error updating cart' });
   }
-
-  const item = req.session.cart.find(item => item.id === parseInt(productId));
-
-  if (item) {
-    if (parseInt(quantity) <= 0) {
-      req.session.cart = req.session.cart.filter(item => item.id !== parseInt(productId));
-    } else {
-      item.quantity = parseInt(quantity);
-    }
-  }
-
-  res.json({
-    success: true,
-    message: 'Cart updated',
-    cartCount: req.session.cart.length
-  });
 });
 
-app.post('/cart/remove', (req, res) => {
-  const { productId } = req.body;
-
-  if (!req.session.cart) {
-    return res.json({ success: false, message: 'Cart is empty' });
+app.post('/cart/remove', async (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user) {
+    return res.json({ success: false, message: 'Please login to manage cart' });
   }
 
-  req.session.cart = req.session.cart.filter(item => item.id !== parseInt(productId));
+  const { productId } = req.body;
 
-  res.json({
-    success: true,
-    message: 'Product removed from cart',
-    cartCount: req.session.cart.length
-  });
+  try {
+    const Cart = require('./models/Cart');
+
+    await Cart.removeItem(req.session.user.id, parseInt(productId));
+
+    const cartCount = await Cart.getCartCount(req.session.user.id);
+
+    res.json({
+      success: true,
+      message: 'Product removed from cart',
+      cartCount
+    });
+  } catch (err) {
+    console.error('Cart remove error:', err);
+    res.json({ success: false, message: 'Error removing from cart' });
+  }
 });
 
 // Auth routes (simplified - replace with actual API calls)
@@ -618,22 +675,40 @@ app.post('/register', async (req, res) => {
   }
   
   try {
-    // In real implementation, call your backend API
-    // const response = await axios.post(`${API_BASE_URL}/auth/register`, { name, email, password });
+    // Import User model
+    const User = require('./models/User');
     
-    // For demo purposes
-    req.session.user = {
-      id: 1,
+    // Check if user already exists
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      req.flash('error', 'Email already registered. Please login or use a different email.');
+      return res.redirect('/register');
+    }
+    
+    // Create new user in database
+    const newUser = await User.create({
       name: name,
       email: email,
+      password: password,
       phone: '',
       address: '',
       role: 'customer'
+    });
+    
+    // Set session with new user data
+    req.session.user = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      phone: newUser.phone || '',
+      address: newUser.address || '',
+      role: newUser.role
     };
     
     req.flash('success', 'Registration successful! Welcome to GameLootMalawi');
     res.redirect('/profile');
   } catch (error) {
+    console.error('Registration error:', error);
     req.flash('error', 'Registration failed. Please try again.');
     res.redirect('/register');
   }

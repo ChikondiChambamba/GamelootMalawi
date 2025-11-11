@@ -84,7 +84,15 @@ function addToCart(productId, quantity = 1) {
             // Optional: Open cart sidebar
             // openCartSidebar();
         } else {
-            showNotification(data.message, 'error');
+            if (data.requireLogin) {
+                // Show login required message and redirect to login
+                showNotification(data.message, 'error');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
+            } else {
+                showNotification(data.message, 'error');
+            }
         }
     })
     .catch(error => {
