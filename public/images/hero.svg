@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1">
+      <stop offset="0%" stop-color="#121212" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#2a0a5e" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g1)" />
+  <g>
+    <circle cx="1300" cy="120" r="160" fill="rgba(255,255,255,0.04)" />
+    <circle cx="140" cy="720" r="220" fill="rgba(255,255,255,0.03)" />
+  </g>
+  <g transform="translate(80,200)">
+    <text x="0" y="0" font-family="Orbitron, Arial, sans-serif" font-size="72" fill="#ffffff" opacity="0.18">GAMELOOT</text>
+  </g>
+  <g transform="translate(80,340)">
+    <text x="0" y="0" font-family="Poppins, Arial, sans-serif" font-size="36" fill="#ffffff" opacity="0.95">Premium gaming experience — placeholder image</text>
+  </g>
+</svg>

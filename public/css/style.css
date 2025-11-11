@@ -195,6 +195,41 @@ nav a:hover::after, nav a.active::after {
     cursor: pointer;
 }
 
+/* Responsive navigation: mobile */
+@media (max-width: 900px) {
+    .header-container {
+        gap: 1rem;
+        padding: 0.5rem 3%;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    nav ul {
+        display: none;
+        position: absolute;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--primary) 0%, #0d0221 100%);
+        flex-direction: column;
+        padding: 1rem 5%;
+        gap: 1rem;
+        z-index: 1200;
+    }
+
+    nav ul.active {
+        display: flex;
+    }
+
+    .search-bar { display: none; }
+
+    .mobile-toggle { display: block; }
+
+    .nav-icons { gap: 0.75rem; }
+
+    .dropdown-content { right: 10px; left: auto; }
+}
+
 /* User dropdown */
 .user-dropdown {
     position: relative;
@@ -501,6 +536,45 @@ nav a:hover::after, nav a.active::after {
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
+/* Animations */
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.animate-on-scroll.in-view {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hero-content { opacity: 0; transform: translateY(10px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.hero-content.visible { opacity: 1; transform: translateY(0); }
+
+/* Small visual polish for product cards to fade in */
+.product-card { will-change: transform, opacity; }
+
+/* Prevent body scroll when mobile nav open */
+body.nav-open {
+    overflow: hidden;
+}
+
+/* Profile page styles */
+.profile-section { padding: 3rem 5%; }
+.profile-header h2 { color: var(--primary); margin-bottom: 0.5rem; }
+.profile-content { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 1.5rem; }
+.profile-card { background: white; padding: 1.5rem; border-radius: 10px; box-shadow: var(--card-shadow); }
+.cart-table { width: 100%; border-collapse: collapse; }
+.cart-table th, .cart-table td { padding: 0.75rem 0.5rem; text-align: left; border-bottom: 1px solid #eee; }
+.cart-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 12px; }
+.cart-product { display: flex; align-items: center; gap: 12px; }
+.cart-product-info { font-size: 0.95rem; }
+.cart-summary { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+.cart-total span { color: var(--gray); margin-right: 0.5rem; }
+
+@media (max-width: 900px) {
+    .profile-content { grid-template-columns: 1fr; }
+}
+
 .product-badge {
     position: absolute;
     top: 15px;
@@ -622,7 +696,7 @@ nav a:hover::after, nav a.active::after {
 
 .category-banner {
     background: linear-gradient(rgba(42, 10, 94, 0.9), rgba(18, 18, 18, 0.85)), 
-                url('https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?ixlib=rb-4.0.3') center/cover;
+                url('https://images.unsplash.com/photo-1552820728-8ac41f1ce891?ixlib=rb-4.0.3&w=1200') center/cover;
     height: 300px;
     display: flex;
     align-items: center;
@@ -631,6 +705,7 @@ nav a:hover::after, nav a.active::after {
     border-radius: 15px;
     margin-bottom: 3rem;
     text-align: center;
+    background-color: #2a0a5e;
 }
 
 .category-banner h2 {

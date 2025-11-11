@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="g2" x1="0" x2="1">
+      <stop offset="0%" stop-color="#2a0a5e"/>
+      <stop offset="100%" stop-color="#0d0221"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" fill="url(#g2)" />
+  <g>
+    <rect x="60" y="40" width="420" height="220" rx="12" fill="rgba(255,255,255,0.04)" />
+    <rect x="520" y="40" width="420" height="220" rx="12" fill="rgba(255,255,255,0.03)" />
+  </g>
+  <g transform="translate(40,80)">
+    <text x="0" y="0" font-family="Orbitron, Arial, sans-serif" font-size="48" fill="#ffffff" opacity="0.95">Category Banner</text>
+  </g>
+  <g transform="translate(40,140)">
+    <text x="0" y="0" font-family="Poppins, Arial, sans-serif" font-size="16" fill="#ffffff" opacity="0.9">Placeholder background — replace with your own image in /public/images/</text>
+  </g>
+</svg>

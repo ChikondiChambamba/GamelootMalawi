@@ -4,6 +4,8 @@ const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
 require('dotenv').config();
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
@@ -12,6 +14,26 @@ const db = require('./config/database');
 const Product = require('./models/Product');
 
 // Middleware
+// Security headers - with CSP allowing Bootstrap, jQuery, and Unsplash images
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://code.jquery.com"],
+            scriptSrcElem: ["'self'", "https://cdn.jsdelivr.net", "https://code.jquery.com"],
+            scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers like onclick
+            styleSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https://images.unsplash.com"],
+            connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+        }
+    }
+}));
+
+// Rate limiters (applied to auth endpoints further below)
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 8, message: 'Too many login attempts, please try again later.' });
+const createAccountLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many accounts created from this IP, please try again after an hour.' });
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //app.use(methodOverride('_method'));
@@ -45,7 +67,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'gamelootmalawi-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: { secure: (process.env.NODE_ENV === 'production'), sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 
 app.use(flash());
@@ -324,17 +346,29 @@ app.get('/register', (req, res) => {
   });
 });
 
-app.get('/profile', (req, res) => {
+app.get('/profile', async (req, res) => {
   if (!req.session.user) {
     req.flash('error', 'Please login to view your profile');
     return res.redirect('/login');
   }
-  
-  res.render('layout', {
-    title: 'My Profile - GameLootMalawi',
-    content: 'pages/profile',
-    user: req.session.user
-  });
+
+  try {
+    const Cart = require('./models/Cart');
+    const cartItems = await Cart.getCartItems(req.session.user.id) || [];
+    const total = await Cart.getCartTotal(req.session.user.id) || 0;
+
+    res.render('layout', {
+      title: 'My Profile - GameLootMalawi',
+      content: 'pages/profile',
+      user: req.session.user,
+      cart: cartItems,
+      cartTotal: total
+    });
+  } catch (err) {
+    console.error('Error loading profile cart:', err);
+    req.flash('error', 'Error loading profile');
+    res.redirect('/');
+  }
 });
 
 app.get('/orders', (req, res) => {
@@ -366,10 +400,38 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname)
   }
 });
-const upload = multer({ storage: storage });
+// Restrict uploads to images and limit size (2 MB)
+function imageFileFilter(req, file, cb) {
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only image files are allowed.'), false);
+  }
+}
 
-app.post('/admin/products', isAdmin, upload.single('image'), async (req, res) => {
+const upload = multer({ storage: storage, fileFilter: imageFileFilter, limits: { fileSize: 2 * 1024 * 1024 } });
+
+// Wrapper to handle multer file upload errors
+const uploadWithErrorHandler = (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'FILE_TOO_LARGE') {
+        return res.status(400).json({ success: false, message: 'File is too large (max 2MB)' });
+      }
+      return res.status(400).json({ success: false, message: 'File upload error: ' + err.message });
+    } else if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+};
+
+app.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res) => {
   try {
+    console.log('POST /admin/products - incoming request body:', Object.keys(req.body));
+    console.log('POST /admin/products - file:', req.file ? req.file.filename : 'no file');
+    
     // Parse specifications if provided as JSON string
     let specifications = [];
     if (req.body.specifications) {
@@ -396,8 +458,10 @@ app.post('/admin/products', isAdmin, upload.single('image'), async (req, res) =>
       images: []
     };
 
+    console.log('Creating product:', productData);
     const product = await Product.create(productData);
     
+    console.log('Product created successfully:', product.id);
     res.json({
       success: true,
       message: 'Product added successfully',
@@ -407,13 +471,13 @@ app.post('/admin/products', isAdmin, upload.single('image'), async (req, res) =>
     console.error('Error adding product:', error);
     res.status(500).json({
       success: false,
-      message: 'Error adding product'
+      message: 'Error adding product: ' + error.message
     });
   }
 });
 
 // Update product
-app.put('/admin/products/:id', isAdmin, upload.single('image'), async (req, res) => {
+app.put('/admin/products/:id', isAdmin, uploadWithErrorHandler, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
@@ -641,19 +705,8 @@ app.post('/cart/remove', async (req, res) => {
 });
 
 // Auth routes (simplified - replace with actual API calls)
-// Auth routes
-app.get('/login', (req, res) => {
-  if (req.session.user) {
-    return res.redirect('/');
-  }
-  res.render('layout', {
-    title: 'Login - GameLootMalawi',
-    content: 'pages/login',
-    user: null
-  });
-});
-
-app.post('/login', authController.loginHandler);
+// Login page route: the main login GET is defined above; here we expose the auth POST handlers.
+app.post('/login', loginLimiter, authController.loginHandler);
 
 app.post('/logout', (req, res) => {
   req.session.destroy((err) => {
@@ -666,7 +719,7 @@ app.post('/logout', (req, res) => {
 
 // Login route is now handled by authController.loginHandler
 
-app.post('/register', async (req, res) => {
+app.post('/register', createAccountLimiter, async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
   
   if (password !== confirmPassword) {
@@ -712,11 +765,6 @@ app.post('/register', async (req, res) => {
     req.flash('error', 'Registration failed. Please try again.');
     res.redirect('/register');
   }
-});
-
-app.post('/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/');
 });
 
 // Start server
@@ -770,4 +818,16 @@ app.put('/admin/orders/:id/status', isAdmin, async (req, res) => {
     console.error('Error updating order status (admin):', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
+});
+
+// Global error handler (simple, logs error and redirects user)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  // For API/XHR requests respond with JSON
+  if (req.xhr || (req.headers && req.headers.accept && req.headers.accept.indexOf('json') !== -1)) {
+    return res.status(err.status || 500).json({ success: false, message: 'Server error' });
+  }
+  // Otherwise set a flash message if available and redirect home
+  try { if (req.flash && typeof req.flash === 'function') req.flash('error', 'Internal Server Error'); } catch (e) {}
+  res.status(err.status || 500).redirect('/');
 });

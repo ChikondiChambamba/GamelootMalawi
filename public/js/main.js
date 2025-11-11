@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mobileToggle && navMenu) {
         mobileToggle.addEventListener('click', function() {
             navMenu.classList.toggle('active');
+            // toggle body scroll when menu open
+            document.body.classList.toggle('nav-open');
         });
     }
 
@@ -155,3 +157,29 @@ function formatCurrency(amount) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { addToCart, showNotification, formatCurrency };
 }
+
+// IntersectionObserver for animate-on-scroll
+document.addEventListener('DOMContentLoaded', function() {
+    const animated = document.querySelectorAll('.animate-on-scroll');
+    const hero = document.querySelector('.hero-content');
+
+    if (hero) {
+        setTimeout(() => hero.classList.add('visible'), 150);
+    }
+
+    if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                    io.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+
+        animated.forEach(el => io.observe(el));
+    } else {
+        // fallback: just show
+        animated.forEach(el => el.classList.add('in-view'));
+    }
+});

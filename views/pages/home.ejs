@@ -17,7 +17,7 @@
     
     <div class="categories-grid">
         <% categories.forEach(category => { %>
-            <div class="category-card">
+            <div class="category-card animate-on-scroll">
                 <div class="category-img">
                     <i class="<%= category.icon %>"></i>
                 </div>
@@ -43,7 +43,7 @@
     <div class="products-grid">
         <% if (featuredProducts.length > 0) { %>
             <% featuredProducts.forEach(product => { %>
-                <div class="product-card" data-product-id="<%= product.id %>">
+                <div class="product-card animate-on-scroll" data-product-id="<%= product.id %>">
                     <% if (product.badge && product.badge !== 'none') { %>
                         <span class="product-badge <%= product.badge %>">
                             <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
@@ -103,7 +103,7 @@
     <div class="products-grid">
         <% if (allProducts.length > 0) { %>
             <% allProducts.forEach(product => { %>
-                <div class="product-card" data-product-id="<%= product.id %>">
+                <div class="product-card animate-on-scroll" data-product-id="<%= product.id %>">
                     <% if (product.badge && product.badge !== 'none') { %>
                         <span class="product-badge <%= product.badge %>">
                             <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
