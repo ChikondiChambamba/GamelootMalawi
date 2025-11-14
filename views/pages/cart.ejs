@@ -18,7 +18,7 @@
             <div class="cart-items-section">
                 <div class="cart-items">
                     <% cart.forEach(item => { %>
-                        <div class="cart-item" data-product-id="<%= item.id %>">
+                        <div class="cart-item" data-product-id="<%= item.product_id %>">
                             <div class="cart-item-img">
                                 <img src="<%= item.image_url %>" alt="<%= item.name %>">
                             </div>
@@ -29,11 +29,11 @@
                                 
                                 <div class="cart-item-actions">
                                     <div class="quantity-control">
-                                        <button class="quantity-btn decrease-quantity" data-product-id="<%= item.id %>">-</button>
-                                        <input type="text" class="quantity-input" value="<%= item.quantity %>" data-product-id="<%= item.id %>">
-                                        <button class="quantity-btn increase-quantity" data-product-id="<%= item.id %>">+</button>
+                                        <button class="quantity-btn decrease-quantity" data-product-id="<%= item.product_id %>">-</button>
+                                        <input type="text" class="quantity-input" value="<%= item.quantity %>" data-product-id="<%= item.product_id %>">
+                                        <button class="quantity-btn increase-quantity" data-product-id="<%= item.product_id %>">+</button>
                                     </div>
-                                    <button class="cart-item-remove" data-product-id="<%= item.id %>">
+                                    <button class="cart-item-remove" data-product-id="<%= item.product_id %>">
                                         <i class="fas fa-trash"></i> Remove
                                     </button>
                                 </div>

@@ -12,6 +12,8 @@ const app = express();
 // Database and models available early so routes can use them
 const db = require('./config/database');
 const Product = require('./models/Product');
+const Promotion = require('./models/Promotion');
+const Wishlist = require('./models/Wishlist');
 
 // Middleware
 // Security headers - with CSP allowing Bootstrap, jQuery, and Unsplash images
@@ -177,6 +179,20 @@ app.get('/shop', async (req, res) => {
       console.error('Could not load categories for shop:', err);
     }
 
+    // Load active promotion when viewing deals category
+    let promotion = null;
+    let winners = [];
+    if (category === 'deals') {
+      try {
+        promotion = await Promotion.getActivePromotion();
+        if (promotion) {
+          winners = await Promotion.getWinners(promotion.id);
+        }
+      } catch (promoErr) {
+        console.error('Could not load promotion data:', promoErr);
+      }
+    }
+
     res.render('layout', {
       title: 'Shop All Products - GameLootMalawi',
       content: 'pages/shop',
@@ -184,7 +200,9 @@ app.get('/shop', async (req, res) => {
       categories: categories,
       currentCategory: category,
       searchTerm: search,
-      pagination: result.pagination || {}
+      pagination: result.pagination || {},
+      promotion,
+      promotionWinners: winners
     });
   } catch (err) {
     console.error('Shop route error:', err);
@@ -830,4 +848,19 @@ app.use((err, req, res, next) => {
   // Otherwise set a flash message if available and redirect home
   try { if (req.flash && typeof req.flash === 'function') req.flash('error', 'Internal Server Error'); } catch (e) {}
   res.status(err.status || 500).redirect('/');
+});
+
+// Wishlist toggle (favorite) - AJAX endpoint
+app.post('/wishlist/toggle', async (req, res) => {
+  if (!req.session.user) return res.json({ success: false, requireLogin: true, message: 'Please login' });
+  const { productId } = req.body;
+  if (!productId) return res.json({ success: false, message: 'Missing productId' });
+
+  try {
+    const result = await Wishlist.toggle(req.session.user.id, parseInt(productId));
+    res.json({ success: true, added: result.added });
+  } catch (err) {
+    console.error('Wishlist toggle error:', err);
+    res.json({ success: false, message: 'Error toggling wishlist' });
+  }
 });

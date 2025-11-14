@@ -24,6 +24,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Wishlist (favorite) buttons
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.getAttribute('data-product-id');
+            toggleWishlist(productId, this);
+        });
+    });
+
     // View details buttons
     document.querySelectorAll('.view-details').forEach(button => {
         button.addEventListener('click', function() {
@@ -107,6 +116,36 @@ function addToCart(productId, quantity = 1) {
 function viewProductDetails(productId) {
     // Redirect to product detail page
     window.location.href = `/product/${productId}`;
+}
+
+// Toggle wishlist via AJAX
+function toggleWishlist(productId, btnEl) {
+    fetch('/wishlist/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+    })
+    .then(r => r.json())
+    .then(json => {
+        if (json.success) {
+            if (json.added) {
+                btnEl.classList.add('favorited');
+                showNotification('Added to wishlist', 'success');
+            } else {
+                btnEl.classList.remove('favorited');
+                showNotification('Removed from wishlist', 'info');
+            }
+        } else if (json.requireLogin) {
+            showNotification('Please login to use wishlist', 'error');
+            setTimeout(() => window.location.href = '/login', 1200);
+        } else {
+            showNotification(json.message || 'Error updating wishlist', 'error');
+        }
+    })
+    .catch(err => {
+        console.error('Wishlist error:', err);
+        showNotification('Error updating wishlist', 'error');
+    });
 }
 
 // Show notification

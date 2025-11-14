@@ -42,7 +42,7 @@
         <% } else { %>
             <div class="products-grid">
                 <% products.forEach(product => { %>
-                    <div class="product-card" data-product-id="<%= product.id %>">
+                        <div class="product-card" data-product-id="<%= product.id %>">
                         <% if (product.badge && product.badge !== 'none') { %>
                             <span class="product-badge <%= product.badge %>">
                                 <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
@@ -54,6 +54,9 @@
                         </div>
                         
                         <div class="product-content">
+                            <button class="favorite-btn" data-product-id="<%= product.id %>" title="Add to wishlist">
+                                <i class="fas fa-heart"></i>
+                            </button>
                             <span class="product-category"><%= product.category_name %></span>
                             <h3 class="product-title"><%= product.name %></h3>
                             
@@ -79,3 +82,24 @@
         <% } %>
     </div>
 </div>
+
+<% if (typeof promotion !== 'undefined' && promotion && typeof currentCategory !== 'undefined' && currentCategory === 'deals') { %>
+    <section class="promotion-section">
+        <div class="container">
+            <h3>Current Promotion: <%= promotion.title %></h3>
+            <p><%= promotion.description %></p>
+            <p>Next giveaway every <%= promotion.giveaway_interval_months %> months.</p>
+
+            <% if (promotionWinners && promotionWinners.length > 0) { %>
+                <h4>Recent Winners</h4>
+                <ul>
+                    <% promotionWinners.forEach(w => { %>
+                        <li><%= w.name %> — <%= w.email %> (<%= new Date(w.awarded_at).toLocaleDateString() %>)</li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <p>No winners yet. Stay tuned!</p>
+            <% } %>
+        </div>
+    </section>
+<% } %>

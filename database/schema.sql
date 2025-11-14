@@ -508,3 +508,27 @@ CALL GetFeaturedProducts(3);
 
 SELECT 'Console Products:' as '';
 CALL GetProductsByCategory('consoles', 1, 5);
+
+-- =============================================
+-- Promotions tables for giveaways
+-- =============================================
+CREATE TABLE IF NOT EXISTS promotions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_date DATE DEFAULT NULL,
+    end_date DATE DEFAULT NULL,
+    giveaway_interval_months INT DEFAULT 3,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS promotion_winners (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    promotion_id INT NOT NULL,
+    user_id INT NOT NULL,
+    awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
