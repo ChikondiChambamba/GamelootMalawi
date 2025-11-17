@@ -1,0 +1,100 @@
+<!-- Admin Dashboard with Price Calculator -->
+<div class="admin-dashboard">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Admin Dashboard</h2>
+            <p class="text-muted">Manage products, categories, and calculate pricing</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#productsContent" type="button">
+                <i class="fas fa-box"></i> Products
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categoriesContent" type="button">
+                <i class="fas fa-folder"></i> Categories
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="calculator-tab" data-bs-toggle="tab" data-bs-target="#calculatorContent" type="button">
+                <i class="fas fa-calculator"></i> Price Calculator
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Products Tab -->
+        <div class="tab-pane fade show active" id="productsContent" role="tabpanel">
+            <%- include('admin-products') %>
+        </div>
+
+        <!-- Categories Tab -->
+        <div class="tab-pane fade" id="categoriesContent" role="tabpanel">
+            <%- include('admin-categories') %>
+        </div>
+
+        <!-- Price Calculator Tab -->
+        <div class="tab-pane fade" id="calculatorContent" role="tabpanel">
+            <div id="priceCalculatorSection">
+                <%- include('admin-price-calculator') %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-dashboard {
+    padding: 1rem;
+}
+
+.admin-dashboard h2 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.admin-dashboard .text-muted {
+    color: #888;
+    font-size: 0.95rem;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.nav-tabs .nav-link {
+    color: #666;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--primary, #007bff);
+    border-bottom: 3px solid var(--primary, #007bff);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary, #007bff);
+    background-color: transparent;
+    border-bottom: 3px solid var(--primary, #007bff);
+}
+
+.tab-content {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+    .nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+</style>

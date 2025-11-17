@@ -54,5 +54,9 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="/js/main.js"></script>
     <script src="/js/admin.js"></script>
+    <% if (content === 'pages/admin-dashboard') { %>
+    <!-- Price calculator script loaded externally to avoid CSP inline blocking -->
+    <script src="/js/price-calculator.js"></script>
+    <% } %>
 </body>
 </html>

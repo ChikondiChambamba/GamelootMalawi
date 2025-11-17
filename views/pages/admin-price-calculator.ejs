@@ -1,0 +1,311 @@
+<!-- Price Calculator for Admins -->
+<div class="price-calculator-section">
+    <div class="calculator-container">
+        <h2>Product Price Calculator</h2>
+        <p class="calculator-description">Calculate the final selling price based on original price, profit margin, forex rate, and transport costs.</p>
+        
+        <div class="calculator-form">
+            <div class="form-group">
+                <label for="origPrice">Original Price (Product Cost)</label>
+                <input 
+                    type="number" 
+                    id="origPrice" 
+                    placeholder="e.g., 50000" 
+                    step="0.01"
+                    min="0"
+                    class="form-control calculator-input">
+                <small>Enter the base cost of the product</small>
+            </div>
+
+            <div class="form-group">
+                <label for="forexRate">Forex Rate (Exchange Rate)</label>
+                <input 
+                    type="number" 
+                    id="forexRate" 
+                    placeholder="e.g., 1.05" 
+                    step="0.01"
+                    min="0"
+                    class="form-control calculator-input"
+                    value="1">
+                <small>Multiply original price by this rate (e.g., USD to MWK)</small>
+            </div>
+
+            <div class="form-group">
+                <label for="transportCost">Transport & Shipping Cost (Fixed)</label>
+                <input 
+                    type="number" 
+                    id="transportCost" 
+                    placeholder="e.g., 5000" 
+                    step="0.01"
+                    min="0"
+                    class="form-control calculator-input">
+                <small>Fixed cost per unit for transport and handling</small>
+            </div>
+
+            <div class="form-group">
+                <label for="profitPercent">Profit Margin (%)</label>
+                <input 
+                    type="number" 
+                    id="profitPercent" 
+                    placeholder="e.g., 25" 
+                    step="0.1"
+                    min="0"
+                    class="form-control calculator-input">
+                <small>Desired profit as percentage of base cost (e.g., 25%)</small>
+            </div>
+        </div>
+
+        <div class="calculator-results">
+            <div class="result-card">
+                <div class="result-row">
+                    <span class="result-label">Original Price:</span>
+                    <span class="result-value" id="resultOrigPrice">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Forex Adjusted:</span>
+                    <span class="result-value" id="resultForexPrice">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Transport Cost:</span>
+                    <span class="result-value" id="resultTransportCost">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Subtotal (before profit):</span>
+                    <span class="result-value" id="resultSubtotal">0.00</span>
+                </div>
+                <div class="result-row profit-row">
+                    <span class="result-label">Profit Amount:</span>
+                    <span class="result-value" id="resultProfitAmount">0.00</span>
+                </div>
+                <div class="result-row final-row">
+                    <span class="result-label"><strong>Final Selling Price:</strong></span>
+                    <span class="result-value final-value" id="resultFinalPrice">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="calculator-actions">
+            <button type="button" class="btn btn-primary" id="resetCalcBtn">Reset</button>
+            <button type="button" class="btn btn-secondary" id="copyPriceBtn">Copy Final Price</button>
+        </div>
+
+        <div class="calculator-formula">
+            <h4>Formula Used:</h4>
+            <code>Final Price = (Original Price × Forex Rate + Transport Cost) × (1 + Profit % / 100)</code>
+        </div>
+    </div>
+</div>
+
+<style>
+.price-calculator-section {
+    margin: 2rem 0;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.calculator-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.calculator-container h2 {
+    color: var(--primary, #007bff);
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.calculator-description {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.calculator-form {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.calculator-input {
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.calculator-input:focus {
+    outline: none;
+    border-color: var(--primary, #007bff);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group small {
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.calculator-results {
+    margin-bottom: 1.5rem;
+}
+
+.result-card {
+    background: #f9f9f9;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    font-family: 'Courier New', monospace;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.result-row:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    color: #555;
+    font-weight: 500;
+}
+
+.result-value {
+    color: #333;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.profit-row {
+    background: #fffacd;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem -1.5rem;
+    border-left: 4px solid #ffd700;
+}
+
+.final-row {
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 1rem;
+    margin: 1rem -1.5rem 0 -1.5rem;
+    border-radius: 6px;
+}
+
+.final-row .result-label {
+    color: white;
+}
+
+.final-row .result-value {
+    color: white;
+}
+
+.final-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.calculator-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    margin-top: 2rem;
+}
+
+.calculator-actions .btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 120px;
+}
+
+.calculator-actions .btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.calculator-actions .btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.calculator-actions .btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.calculator-actions .btn-secondary:hover {
+    background: #545b62;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calculator-formula {
+    background: #e7f3ff;
+    border-left: 4px solid var(--primary, #007bff);
+    padding: 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.calculator-formula h4 {
+    margin: 0 0 0.5rem 0;
+    color: #0056b3;
+}
+
+.calculator-formula code {
+    background: #fff;
+    padding: 0.5rem;
+    border-radius: 3px;
+    display: block;
+    color: #333;
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .price-calculator-section {
+        padding: 1rem;
+    }
+
+    .calculator-container {
+        padding: 1rem;
+    }
+
+    .calculator-actions {
+        flex-direction: column;
+    }
+
+    .calculator-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+<!-- Price calculator JS loaded from /js/price-calculator.js to comply with CSP -->

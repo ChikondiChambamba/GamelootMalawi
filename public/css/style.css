@@ -44,6 +44,7 @@ header {
     align-items: center;
     max-width: 1400px;
     margin: 0 auto;
+    position: relative; /* ensure absolutely positioned mobile menu is anchored here */
 }
 
 .logo {
@@ -207,7 +208,7 @@ nav a:hover::after, nav a.active::after {
     nav ul {
         display: none;
         position: absolute;
-        top: 70px;
+        top: 100%; /* place menu directly below header container */
         left: 0;
         right: 0;
         background: linear-gradient(135deg, var(--primary) 0%, #0d0221 100%);
