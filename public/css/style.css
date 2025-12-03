@@ -650,8 +650,9 @@ body.nav-open {
 
 .original-price {
     font-size: 1.1rem;
-    color: var(--gray);
+    color: #d9534f; /* red for strike-through price */
     text-decoration: line-through;
+    text-decoration-color: #d9534f;
 }
 
 .product-actions {
@@ -808,8 +809,9 @@ body.nav-open {
 
 .detail-original {
     font-size: 1.5rem;
-    color: var(--gray);
+    color: #d9534f; /* red for strike-through price on product detail */
     text-decoration: line-through;
+    text-decoration-color: #d9534f;
 }
 
 .stock-status {
