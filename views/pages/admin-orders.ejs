@@ -42,36 +42,47 @@
 
  
 <script>
-// Basic client-side handlers (placeholder)
-document.addEventListener('click', function(e) {
-  const viewBtn = e.target.closest('.view-order');
-  if (viewBtn) {
-    const id = viewBtn.dataset.orderId;
-    // For now open order detail in a new tab (API exists at /orders/:id)
-    window.open('/orders/' + id, '_blank');
-  }
-
-  const statusBtn = e.target.closest('.change-status');
-  if (statusBtn) {
-    const id = statusBtn.dataset.orderId;
-    const newStatus = prompt('Enter new status (pending, confirmed, shipped, delivered, cancelled):');
-    if (!newStatus) return;
-
-    fetch('/admin/orders/' + id + '/status', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus })
-    }).then(res => res.json()).then(json => {
-      if (json.success) {
-        alert('Status updated');
-        location.reload();
-      } else {
-        alert('Error: ' + (json.message || 'Could not update status'));
-      }
-    }).catch(err => {
-      console.error(err);
-      alert('Request failed');
+document.addEventListener('DOMContentLoaded', function () {
+  // View buttons
+  document.querySelectorAll('.view-order').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const id = this.getAttribute('data-order-id');
+      if (!id) return;
+      // Open detail in same tab for easier admin workflow
+      window.location.href = '/orders/' + id;
     });
-  }
+  });
+
+  // Change status buttons
+  document.querySelectorAll('.change-status').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const id = this.getAttribute('data-order-id');
+      if (!id) return;
+
+      const newStatus = prompt('Enter new status (pending, confirmed, shipped, delivered, cancelled):');
+      if (!newStatus) return;
+
+      fetch('/admin/orders/' + id + '/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          // show a quick confirmation and refresh
+          alert('Status updated');
+          location.reload();
+        } else {
+          alert('Error: ' + (json.message || 'Could not update status'));
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Request failed');
+      });
+    });
+  });
 });
 </script>

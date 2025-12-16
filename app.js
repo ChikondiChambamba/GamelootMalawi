@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
@@ -35,6 +36,8 @@ app.use(helmet({
 // Rate limiters (applied to auth endpoints further below)
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 8, message: 'Too many login attempts, please try again later.' });
 const createAccountLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many accounts created from this IP, please try again after an hour.' });
+// Rate limiter for password reset requests to prevent abuse
+const forgotPasswordLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many password reset requests, please try again later.' });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -364,6 +367,170 @@ app.get('/register', (req, res) => {
   });
 });
 
+// Forgot password page
+app.get('/forgot-password', (req, res) => {
+  if (req.session.user) {
+    return res.redirect('/profile');
+  }
+
+  res.render('layout', {
+    title: 'Forgot Password - GameLootMalawi',
+    content: 'pages/forgot-password'
+  });
+});
+
+const crypto = require('crypto');
+const mailer = require('./utils/mailer');
+const User = require('./models/User');
+
+// Handle forgot password form submission
+app.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findByEmail(email);
+
+    // Always respond with a success message to avoid revealing which emails are registered
+    if (!user) {
+      req.flash('success', 'If an account with that email exists, a reset link has been sent.');
+      return res.redirect('/login');
+    }
+
+    // Ensure password_resets table exists
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        token_hash VARCHAR(255) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user (user_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Generate token and store hash
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Remove any existing tokens for this user
+    await db.execute('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
+
+    await db.execute('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?,?,?)', [user.id, tokenHash, expiresAt]);
+
+    const resetLink = `${req.protocol}://${req.get('host')}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    // Render HTML template if available
+    let html = `Hello ${user.name || ''},\n\nPlease visit: ${resetLink}`;
+    try {
+      const tmplPath = path.join(__dirname, 'utils', 'emailTemplates', 'resetPassword.html');
+      if (fs.existsSync(tmplPath)) {
+        html = fs.readFileSync(tmplPath, 'utf8');
+        html = html.replace(/{{resetLink}}/g, resetLink).replace(/{{name}}/g, user.name || '');
+      }
+    } catch (tmplErr) {
+      console.warn('Could not load email template, using plaintext fallback:', tmplErr && tmplErr.message);
+    }
+
+    try {
+      await mailer.sendMail(email, 'GameLootMalawi — Password Reset', html);
+    } catch (mailErr) {
+      console.error('Error sending reset email:', mailErr);
+      // Continue; don't reveal email send failures to the user
+    }
+
+    req.flash('success', 'If an account with that email exists, a reset link has been sent.');
+    res.redirect('/login');
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    req.flash('error', 'Error processing password reset request');
+    res.redirect('/forgot-password');
+  }
+});
+
+// Show reset password form
+app.get('/reset-password', async (req, res) => {
+  const { token, email } = req.query;
+  res.render('layout', {
+    title: 'Reset Password - GameLootMalawi',
+    content: 'pages/reset-password',
+    token,
+    email
+  });
+});
+
+// Dev-only route to preview logged emails (safe-guarded: only available when not in production)
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/__dev/emails', (req, res) => {
+    const logPath = path.join(process.cwd(), 'tmp', 'emails.log');
+    let content = '';
+    try {
+      if (fs.existsSync(logPath)) {
+        content = fs.readFileSync(logPath, 'utf8');
+      } else {
+        content = 'No emails logged yet.';
+      }
+    } catch (err) {
+      console.error('Error reading emails log:', err && err.message);
+      content = 'Error reading emails log';
+    }
+
+    // Simple HTML view for quick preview
+    res.send(`<html><head><title>Dev Emails</title><style>body{font-family:Arial,Helvetica,sans-serif;padding:20px}pre{white-space:pre-wrap;background:#f7f7f7;padding:16px;border-radius:6px}</style></head><body><h1>Logged Emails</h1><pre>${content.replace(/</g,'&lt;')}</pre></body></html>`);
+  });
+}
+
+// Handle reset submission
+app.post('/reset-password', async (req, res) => {
+  const { token, email, password, confirmPassword } = req.body;
+
+  if (!token || !email) {
+    req.flash('error', 'Invalid reset link');
+    return res.redirect('/forgot-password');
+  }
+
+  if (!password || password !== confirmPassword) {
+    req.flash('error', 'Passwords do not match');
+    return res.redirect(`/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`);
+  }
+
+  try {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const [rows] = await db.execute('SELECT * FROM users WHERE email = ? AND is_active = TRUE', [email]);
+    const user = rows[0];
+    if (!user) {
+      req.flash('error', 'Invalid reset request');
+      return res.redirect('/forgot-password');
+    }
+
+    const [tokens] = await db.execute('SELECT * FROM password_resets WHERE user_id = ? AND token_hash = ? LIMIT 1', [user.id, tokenHash]);
+    const tokenRow = tokens[0];
+    if (!tokenRow) {
+      req.flash('error', 'Invalid or expired reset link');
+      return res.redirect('/forgot-password');
+    }
+
+    const expiresAt = new Date(tokenRow.expires_at);
+    if (expiresAt.getTime() < Date.now()) {
+      await db.execute('DELETE FROM password_resets WHERE id = ?', [tokenRow.id]);
+      req.flash('error', 'Reset link has expired');
+      return res.redirect('/forgot-password');
+    }
+
+    // Update password
+    await User.changePassword(user.id, password);
+    // Remove token
+    await db.execute('DELETE FROM password_resets WHERE id = ?', [tokenRow.id]);
+
+    req.flash('success', 'Password reset successful — you may now log in');
+    res.redirect('/login');
+  } catch (err) {
+    console.error('Reset password error:', err);
+    req.flash('error', 'Error resetting password');
+    res.redirect('/forgot-password');
+  }
+});
+
 app.get('/profile', async (req, res) => {
   if (!req.session.user) {
     req.flash('error', 'Please login to view your profile');
@@ -389,16 +556,33 @@ app.get('/profile', async (req, res) => {
   }
 });
 
-app.get('/orders', (req, res) => {
+app.get('/orders', async (req, res) => {
   if (!req.session.user) {
     req.flash('error', 'Please login to view your orders');
     return res.redirect('/login');
   }
-  
-  res.render('layout', {
-    title: 'My Orders - GameLootMalawi',
-    content: 'pages/orders'
-  });
+
+  try {
+    const Order = require('./models/order');
+    const page = req.query.page || 1;
+    const limit = 50;
+    const orders = await Order.findByUserId(req.session.user.id, { page: parseInt(page, 10), limit });
+
+    res.render('layout', {
+      title: 'My Orders - GameLootMalawi',
+      content: 'pages/orders',
+      orders: orders || [],
+      pagination: { page: parseInt(page, 10), limit }
+    });
+  } catch (err) {
+    console.error('Error loading user orders page:', err);
+    req.flash('error', 'Error loading your orders');
+    res.render('layout', {
+      title: 'My Orders - GameLootMalawi',
+      content: 'pages/orders',
+      orders: []
+    });
+  }
 });
 
 // Import middleware and controllers
@@ -899,5 +1083,39 @@ app.post('/wishlist/toggle', async (req, res) => {
   } catch (err) {
     console.error('Wishlist toggle error:', err);
     res.json({ success: false, message: 'Error toggling wishlist' });
+  }
+});
+
+// Order detail view (users see their own orders; admins can view any)
+app.get('/orders/:id', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      req.flash('error', 'Please login to view order');
+      return res.redirect('/login');
+    }
+
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+    if (!order) {
+      req.flash('error', 'Order not found');
+      return res.redirect('/orders');
+    }
+
+    // If not admin, ensure the order belongs to the current user
+    if (req.session.user.role !== 'admin' && order.user_id !== req.session.user.id) {
+      req.flash('error', 'Access denied');
+      return res.redirect('/');
+    }
+
+    res.render('layout', {
+      title: `Order ${order.order_number || order.id} - GameLootMalawi`,
+      content: 'pages/admin-order-detail',
+      order,
+      currentUser: req.session.user
+    });
+  } catch (err) {
+    console.error('Error loading order detail:', err);
+    req.flash('error', 'Error loading order');
+    res.redirect('/orders');
   }
 });

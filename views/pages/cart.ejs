@@ -18,7 +18,7 @@
             <div class="cart-items-section">
                 <div class="cart-items">
                     <% cart.forEach(item => { %>
-                        <div class="cart-item" data-product-id="<%= item.product_id %>">
+                        <div class="cart-item" data-product-id="<%= item.product_id %>" data-price="<%= item.price %>" data-quantity="<%= item.quantity %>">
                             <div class="cart-item-img">
                                 <img src="<%= item.image_url %>" alt="<%= item.name %>">
                             </div>
@@ -29,11 +29,11 @@
                                 
                                 <div class="cart-item-actions">
                                     <div class="quantity-control">
-                                        <button class="quantity-btn decrease-quantity" data-product-id="<%= item.product_id %>">-</button>
+                                        <button type="button" class="quantity-btn decrease-quantity" data-product-id="<%= item.product_id %>">-</button>
                                         <input type="text" class="quantity-input" value="<%= item.quantity %>" data-product-id="<%= item.product_id %>">
-                                        <button class="quantity-btn increase-quantity" data-product-id="<%= item.product_id %>">+</button>
+                                        <button type="button" class="quantity-btn increase-quantity" data-product-id="<%= item.product_id %>">+</button>
                                     </div>
-                                    <button class="cart-item-remove" data-product-id="<%= item.product_id %>">
+                                    <button type="button" class="cart-item-remove" data-product-id="<%= item.product_id %>">
                                         <i class="fas fa-trash"></i> Remove
                                     </button>
                                 </div>
@@ -49,7 +49,7 @@
                     
                     <div class="summary-row">
                         <span>Subtotal:</span>
-                        <span>MK <%= total.toLocaleString() %></span>
+                        <span id="cart-subtotal">MK <%= total.toLocaleString() %></span>
                     </div>
                     
                     <div class="summary-row">
@@ -64,7 +64,7 @@
                     
                     <div class="summary-row total">
                         <span>Total:</span>
-                        <span>MK <%= total.toLocaleString() %></span>
+                        <span id="cart-total" data-total="<%= total %>">MK <%= total.toLocaleString() %></span>
                     </div>
                     
                     <div class="summary-actions">
@@ -138,6 +138,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Update cart count in header if present and reload to ensure totals are correct
+                const cartCountEl = document.querySelector('.cart-count');
+                if (cartCountEl && typeof data.cartCount !== 'undefined') cartCountEl.textContent = data.cartCount;
                 location.reload();
             }
         });
@@ -154,7 +157,41 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                // Remove the cart item element and adjust totals without full reload
+                const itemEl = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
+                if (itemEl) {
+                    // determine price and quantity
+                    const price = parseFloat(itemEl.getAttribute('data-price')) || 0;
+                    const qtyInput = itemEl.querySelector('.quantity-input');
+                    const qty = qtyInput ? parseInt(qtyInput.value) || parseInt(itemEl.getAttribute('data-quantity')) || 1 : parseInt(itemEl.getAttribute('data-quantity')) || 1;
+
+                    // remove element from DOM
+                    itemEl.remove();
+
+                    // update totals
+                    const totalEl = document.getElementById('cart-total');
+                    const subtotalEl = document.getElementById('cart-subtotal');
+                    if (totalEl) {
+                        const currentTotal = parseFloat(totalEl.getAttribute('data-total')) || 0;
+                        const newTotal = Math.max(0, currentTotal - (price * qty));
+                        totalEl.setAttribute('data-total', newTotal);
+                        totalEl.textContent = 'MK ' + newTotal.toLocaleString();
+                    }
+                    if (subtotalEl && totalEl) {
+                        subtotalEl.textContent = totalEl.textContent;
+                    }
+
+                    // update header cart count
+                    const cartCountEl = document.querySelector('.cart-count');
+                    if (cartCountEl && typeof data.cartCount !== 'undefined') cartCountEl.textContent = data.cartCount;
+
+                    // If no items remain, reload to show empty cart UI
+                    if (!document.querySelector('.cart-item')) {
+                        location.reload();
+                    }
+                } else {
+                    location.reload();
+                }
             }
         });
     }

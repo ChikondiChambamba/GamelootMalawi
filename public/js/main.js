@@ -34,8 +34,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // User dropdown: toggle on click instead of hover
+    const userDropdown = document.querySelector('.user-dropdown');
+    if (userDropdown) {
+        userDropdown.addEventListener('click', function(e) {
+            // Toggle open class
+            this.classList.toggle('open');
+            e.stopPropagation();
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', function() {
+            if (userDropdown.classList.contains('open')) {
+                userDropdown.classList.remove('open');
+            }
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && userDropdown.classList.contains('open')) {
+                userDropdown.classList.remove('open');
+            }
+        });
+    }
+
+    // Delegated handlers for cart controls (works even if cart HTML rendered later)
+    document.addEventListener('click', function(e) {
+        const dec = e.target.closest('.decrease-quantity');
+        const inc = e.target.closest('.increase-quantity');
+        const removeBtn = e.target.closest('.cart-item-remove');
+
+        if (dec) {
+            const productId = dec.getAttribute('data-product-id');
+            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+            let qty = parseInt(input.value) || 1;
+            if (qty > 1) updateCartItemServer(productId, qty - 1);
+            return;
+        }
+
+        if (inc) {
+            const productId = inc.getAttribute('data-product-id');
+            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+            let qty = parseInt(input.value) || 0;
+            updateCartItemServer(productId, qty + 1);
+            return;
+        }
+
+        if (removeBtn) {
+            const productId = removeBtn.getAttribute('data-product-id');
+            removeFromCartServer(productId);
+            return;
+        }
+    });
+
+    // Delegated handler for quantity input changes
+    document.addEventListener('change', function(e) {
+        const input = e.target.closest('.quantity-input');
+        if (input) {
+            const productId = input.getAttribute('data-product-id');
+            const qty = parseInt(input.value) || 1;
+            if (qty > 0) updateCartItemServer(productId, qty);
+        }
+    });
+
     // Search functionality
-    const searchForm = document.querySelector('.search-form');
+// Add to cart function
     if (searchForm) {
         searchForm.addEventListener('submit', function(e) {
             const searchInput = this.querySelector('input[name="search"]');
@@ -102,6 +165,53 @@ function addToCart(productId, quantity = 1) {
     .catch(error => {
         console.error('Error adding to cart:', error);
         showNotification('Error adding product to cart', 'error');
+    });
+}
+
+// Update cart item on server
+function updateCartItemServer(productId, quantity) {
+    fetch('/cart/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const cartCountEl = document.querySelector('.cart-count');
+            if (cartCountEl && typeof data.cartCount !== 'undefined') cartCountEl.textContent = data.cartCount;
+            // reload to ensure totals update correctly
+            location.reload();
+        } else {
+            showNotification(data.message || 'Error updating cart', 'error');
+        }
+    })
+    .catch(err => {
+        console.error('Update cart error:', err);
+        showNotification('Error updating cart', 'error');
+    });
+}
+
+// Remove cart item on server
+function removeFromCartServer(productId) {
+    fetch('/cart/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const cartCountEl = document.querySelector('.cart-count');
+            if (cartCountEl && typeof data.cartCount !== 'undefined') cartCountEl.textContent = data.cartCount;
+            location.reload();
+        } else {
+            showNotification(data.message || 'Error removing item', 'error');
+        }
+    })
+    .catch(err => {
+        console.error('Remove cart error:', err);
+        showNotification('Error removing item from cart', 'error');
     });
 }
 

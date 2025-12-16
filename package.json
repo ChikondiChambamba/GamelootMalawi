@@ -15,6 +15,7 @@
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "node": "^25.1.0",
+    "nodemailer": "^7.0.11",
     "nodemon": "^3.1.11"
   },
   "name": "nglm",
@@ -22,7 +23,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test-mailer": "node scripts/test-mailer.js"
   },
   "repository": {
     "type": "git",

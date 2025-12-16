@@ -1,0 +1,83 @@
+<div class="container py-4">
+  <div class="row mb-3">
+    <div class="col-8">
+      <h2>Order Details</h2>
+      <p>Order #: <strong><%= order.order_number || ('#' + order.id) %></strong></p>
+      <p>Customer: <%= order.customer_name %> &lt;<%= order.customer_email %>&gt;</p>
+      <p>Placed: <%= new Date(order.created_at).toLocaleString() %></p>
+    </div>
+    <div class="col-4 text-end">
+      <label for="status-select">Status</label>
+      <select id="status-select" class="form-select d-inline-block" style="width: auto;">
+        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>pending</option>
+        <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>confirmed</option>
+        <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>shipped</option>
+        <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>delivered</option>
+        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>cancelled</option>
+      </select>
+      <button id="save-status" class="btn btn-sm btn-primary ms-2">Save</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5>Items</h5>
+          <% if (order.items && order.items.length) { %>
+            <table class="table table-sm">
+              <thead>
+                <tr><th>Product</th><th>Unit Price</th><th>Qty</th><th>Total</th></tr>
+              </thead>
+              <tbody>
+                <% order.items.forEach(item => { %>
+                  <tr>
+                    <td>
+                      <img src="<%= item.product_image %>" alt="" style="width:48px;height:48px;object-fit:cover;margin-right:8px;"> <%= item.product_name %>
+                    </td>
+                    <td>MK <%= Number(item.unit_price).toLocaleString() %></td>
+                    <td><%= item.quantity %></td>
+                    <td>MK <%= Number(item.total_price).toLocaleString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } else { %>
+            <p>No items found for this order.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <h5>Summary</h5>
+          <p>Subtotal: <strong>MK <%= Number(order.total_amount).toLocaleString() %></strong></p>
+          <p>Payment Method: <%= order.payment_method || 'N/A' %></p>
+          <p>Customer Phone: <%= order.customer_phone %></p>
+          <p>Shipping Address:</p>
+          <pre style="white-space:pre-wrap"><%= order.shipping_address || '—' %></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('save-status').addEventListener('click', function() {
+  const status = document.getElementById('status-select').value;
+  fetch('/admin/orders/<%= order.id %>/status', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  }).then(r => r.json()).then(j => {
+    if (j.success) {
+      alert('Status updated');
+      location.reload();
+    } else {
+      alert('Error updating status: ' + (j.message || 'unknown'));
+    }
+  }).catch(e => { console.error(e); alert('Request failed'); });
+});
+</script>
