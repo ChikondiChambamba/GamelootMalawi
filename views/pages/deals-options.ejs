@@ -1,0 +1,32 @@
+<section class="category-section">
+  <div class="category-banner" style="background-image: linear-gradient(120deg, rgba(18,18,18,0.72), rgba(42,10,94,0.6)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1400&q=80');">
+    <h2><%= dealTitle %></h2>
+  </div>
+
+  <div class="deals-options-topnav">
+    <a href="/deals/swap" class="<%= dealType === 'swap' ? 'active' : '' %>">Swap Games</a>
+    <a href="/deals/rent" class="<%= dealType === 'rent' ? 'active' : '' %>">Rentals</a>
+    <a href="/deals/tournaments" class="<%= dealType === 'tournament' ? 'active' : '' %>">Tournaments</a>
+  </div>
+
+  <% if (deals && deals.length > 0) { %>
+    <div class="deals-option-grid">
+      <% deals.forEach(item => { %>
+        <article class="deal-option-card">
+          <h3><%= item.title %></h3>
+          <p><%= item.description || '' %></p>
+          <div class="deal-option-meta">
+            <% if (Number(item.price_mwk) > 0) { %><span>MWK <%= Number(item.price_mwk).toLocaleString() %></span><% } %>
+            <% if (item.location) { %><span><%= item.location %></span><% } %>
+            <% if (item.starts_at) { %><span><%= new Date(item.starts_at).toLocaleString() %></span><% } %>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <p>No options currently available in this section.</p>
+      <p>Please check back soon.</p>
+    </div>
+  <% } %>
+</section>

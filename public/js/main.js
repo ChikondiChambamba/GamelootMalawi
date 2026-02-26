@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (heroController && heroSection) {
         initCatchMeController(heroController, heroSection);
     }
+
+    if (cartIcon) {
+        cartIcon.addEventListener('click', function() {
+            window.location.href = '/cart';
+        });
+    }
     
     // Add to cart buttons
     document.querySelectorAll('.add-to-cart').forEach(button => {

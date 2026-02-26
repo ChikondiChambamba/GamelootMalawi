@@ -1,0 +1,61 @@
+<section class="products">
+  <div class="products-header">
+    <div class="section-title" style="text-align:left;margin-bottom:0;">
+      <h2>Deals Management</h2>
+      <p>Add options for swap, rentals, and tournaments</p>
+    </div>
+  </div>
+
+  <div class="deal-admin-layout">
+    <div class="deal-admin-card">
+      <h3>Add Deal Option</h3>
+      <form action="/admin/deals" method="POST" class="deal-admin-form">
+        <label>Type</label>
+        <select name="type" required>
+          <option value="swap">Swap</option>
+          <option value="rent">Rent</option>
+          <option value="tournament">Tournament</option>
+        </select>
+
+        <label>Title</label>
+        <input type="text" name="title" required>
+
+        <label>Description</label>
+        <textarea name="description" rows="4"></textarea>
+
+        <label>Price (MWK)</label>
+        <input type="number" name="price_mwk" min="0" step="0.01">
+
+        <label>Location (optional)</label>
+        <input type="text" name="location">
+
+        <label>Start Date/Time (optional)</label>
+        <input type="datetime-local" name="starts_at">
+
+        <button type="submit" class="btn">Add Option</button>
+      </form>
+    </div>
+
+    <div class="deal-admin-card">
+      <h3>Existing Options</h3>
+      <% if (dealItems && dealItems.length) { %>
+        <div class="deal-admin-list">
+          <% dealItems.forEach(item => { %>
+            <div class="deal-admin-item">
+              <div>
+                <strong>[<%= item.type %>]</strong> <%= item.title %>
+                <div class="deal-admin-muted"><%= item.description || '' %></div>
+              </div>
+              <form action="/admin/deals/<%= item.id %>/delete" method="POST">
+                <button type="submit" class="btn btn-outline">Remove</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p>No deals options added yet.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+

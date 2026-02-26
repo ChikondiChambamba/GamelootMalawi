@@ -20,6 +20,7 @@ const cartRoutes = require('./routes/web/cart');
 const adminRoutes = require('./routes/web/admin');
 const createAccountRoutes = require('./routes/web/account');
 const rewardsRoutes = require('./routes/web/rewards');
+const dealsRoutes = require('./routes/web/deals');
 
 const apiAuthRoutes = require('./routes/auth');
 const apiProductRoutes = require('./routes/product');
@@ -121,6 +122,7 @@ app.use('/', cartRoutes);
 app.use('/', createAccountRoutes({ loginLimiter, createAccountLimiter, forgotPasswordLimiter }));
 app.use('/', adminRoutes);
 app.use('/', rewardsRoutes);
+app.use('/', dealsRoutes);
 
 // Wire previously-unused API routers
 app.use('/api/auth', apiAuthRoutes);

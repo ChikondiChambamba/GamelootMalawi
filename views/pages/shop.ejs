@@ -27,11 +27,17 @@
             </div>
             
             <div class="filter-controls">
-                <button class="filter-btn active">All</button>
-                <button class="filter-btn">New Arrivals</button>
-                <button class="filter-btn">Best Sellers</button>
-                <button class="filter-btn">Price: Low to High</button>
-                <button class="filter-btn">Price: High to Low</button>
+                <% if (typeof currentCategory !== 'undefined' && currentCategory === 'deals') { %>
+                    <a class="filter-btn active" href="/deals/swap">Swap a Game</a>
+                    <a class="filter-btn" href="/deals/rent">Rent a Game</a>
+                    <a class="filter-btn" href="/deals/tournaments">Apply for a Tournament</a>
+                <% } else { %>
+                    <button class="filter-btn active">All</button>
+                    <button class="filter-btn">New Arrivals</button>
+                    <button class="filter-btn">Best Sellers</button>
+                    <button class="filter-btn">Price: Low to High</button>
+                    <button class="filter-btn">Price: High to Low</button>
+                <% } %>
             </div>
         </div>
         

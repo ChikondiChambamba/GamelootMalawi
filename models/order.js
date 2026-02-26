@@ -88,8 +88,11 @@ class Order {
     const offset = Math.max(0, (pageNum - 1) * lim);
 
     const sql = `
-      SELECT o.* FROM orders o
+      SELECT o.*, COALESCE(COUNT(oi.id),0) AS items_count
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE o.user_id = ?
+      GROUP BY o.id
       ORDER BY o.created_at DESC
       LIMIT ${Number(lim)} OFFSET ${Number(offset)}
     `;

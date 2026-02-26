@@ -18,7 +18,7 @@
 					<tr>
 						<td><%= order.order_number || order.id %></td>
 						<td><%= (order.created_at) ? new Date(order.created_at).toLocaleString() : '' %></td>
-						<td><%= (order.items && order.items.length) ? order.items.length : 0 %></td>
+						<td><%= Number(order.items_count || 0) %></td>
 						<td>K<%= order.total_amount %></td>
 						<td><%= order.status || 'pending' %></td>
 						<td><a href="/orders/<%= order.id %>">View</a></td>
