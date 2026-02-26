@@ -1,13 +1,16 @@
 <div class="category-section">
+    <% const activeCategoryImage = (category && category.image_url) || currentCategoryImage || '/images/category-banner.jpg'; %>
+    <% const bannerStyle = `background-image: linear-gradient(120deg, rgba(18,18,18,0.68), rgba(42,10,94,0.6)), url('${activeCategoryImage}');`; %>
+
     <% if (category) { %>
-        <div class="category-banner">
+        <div class="category-banner animate-on-scroll" style="<%= bannerStyle %>">
             <h2><%= category.name %></h2>
         </div>
         <p class="category-description">
             <%= category.description %>
         </p>
     <% } else { %>
-        <div class="category-banner">
+        <div class="category-banner animate-on-scroll" style="<%= bannerStyle %>">
             <h2>Shop All Products</h2>
         </div>
         <p class="category-description">
@@ -41,8 +44,8 @@
             </div>
         <% } else { %>
             <div class="products-grid">
-                <% products.forEach(product => { %>
-                        <div class="product-card" data-product-id="<%= product.id %>">
+                <% products.forEach((product, index) => { %>
+                        <div class="product-card animate-on-scroll" style="--stagger: <%= index %>;" data-product-id="<%= product.id %>">
                         <% if (product.badge && product.badge !== 'none') { %>
                             <span class="product-badge <%= product.badge %>">
                                 <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>

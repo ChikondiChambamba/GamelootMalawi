@@ -12,8 +12,8 @@ const categoryValidation = [
 
 // Public routes
 router.get('/', categoryController.getCategories);
-router.get('/:id', categoryController.getCategoryById);
 router.get('/slug/:slug', categoryController.getCategoryBySlug);
+router.get('/:id', categoryController.getCategoryById);
 
 // Admin routes
 router.post('/', adminAuth, categoryValidation, categoryController.createCategory);

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const productController = require('../controllers/productController');
+const productController = require('../controllers/productControllers');
 const { auth, adminAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -25,8 +25,3 @@ router.put('/:id', adminAuth, upload.single('image'), productController.updatePr
 router.delete('/:id', adminAuth, productController.deleteProduct);
 
 module.exports = router;
-
-// Pagination guards
-page = parseInt(page, 10) || 1;
-limit = parseInt(limit, 10) || 10;
-const offset = Math.max(0, (page - 1) * limit);

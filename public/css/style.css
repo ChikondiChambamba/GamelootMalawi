@@ -161,13 +161,13 @@ nav a:hover::after, nav a.active::after {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 30px;
     padding: 0.5rem 1rem;
-    width: 300px;
+    width: 285px;
     transition: var(--transition);
 }
 
 .search-bar:focus-within {
     background: rgba(255, 255, 255, 0.25);
-    width: 350px;
+    width: 335px;
 }
 
 .search-form {
@@ -351,6 +351,55 @@ nav a:hover::after, nav a.active::after {
 .hero-content {
     max-width: 650px;
     z-index: 2;
+}
+
+.hero-controller {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    width: 220px;
+    min-height: 72px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    text-align: left;
+    padding: 10px 16px;
+    color: #fff;
+    font-size: 1rem;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), rgba(0, 195, 255, 0.22));
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35), 0 0 24px rgba(0, 195, 255, 0.45);
+    z-index: 1;
+    pointer-events: auto;
+    will-change: top, left, transform;
+    cursor: pointer;
+    user-select: none;
+}
+
+.hero-controller:hover {
+    transform: scale(1.03);
+}
+
+.hero-controller-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: rgba(255, 255, 255, 0.18);
+    flex: 0 0 auto;
+}
+
+.hero-controller-text {
+    font-size: 0.83rem;
+    line-height: 1.2;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
 }
 
 .hero h2 {
@@ -540,8 +589,9 @@ nav a:hover::after, nav a.active::after {
 /* Animations */
 .animate-on-scroll {
     opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+    transition-delay: calc(var(--stagger, 0) * 70ms);
 }
 .animate-on-scroll.in-view {
     opacity: 1;
@@ -697,8 +747,8 @@ body.nav-open {
 }
 
 .category-banner {
-    background: linear-gradient(rgba(42, 10, 94, 0.9), rgba(18, 18, 18, 0.85)), 
-                url('https://images.unsplash.com/photo-1552820728-8ac41f1ce891?ixlib=rb-4.0.3&w=1200') center/cover;
+    background-size: cover;
+    background-position: center;
     height: 300px;
     display: flex;
     align-items: center;
@@ -708,6 +758,7 @@ body.nav-open {
     margin-bottom: 3rem;
     text-align: center;
     background-color: #2a0a5e;
+    animation: bannerFloat 9s ease-in-out infinite alternate;
 }
 
 .category-banner h2 {
@@ -724,6 +775,11 @@ body.nav-open {
     font-size: 1.1rem;
     line-height: 1.8;
     color: #555;
+}
+
+@keyframes bannerFloat {
+    from { background-position: center center; }
+    to { background-position: center 42%; }
 }
 
 /* Product Detail Page */
@@ -1566,11 +1622,11 @@ footer {
     }
     
     .search-bar {
-        width: 200px;
+        width: 185px;
     }
     
     .search-bar:focus-within {
-        width: 250px;
+        width: 235px;
     }
     
     .detail-content {
@@ -1604,6 +1660,23 @@ footer {
     
     .hero h2 {
         font-size: 2rem;
+    }
+
+    .hero-controller {
+        width: 150px;
+        min-height: 56px;
+        padding: 8px 10px;
+        opacity: 0.8;
+    }
+
+    .hero-controller-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    .hero-controller-text {
+        font-size: 0.64rem;
     }
     
     .hero p {

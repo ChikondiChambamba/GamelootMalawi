@@ -64,4 +64,9 @@ const adminAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { isAuth: auth, isAdmin: adminAuth };
+module.exports = {
+  isAuth: auth,
+  isAdmin: adminAuth,
+  auth,
+  adminAuth
+};
