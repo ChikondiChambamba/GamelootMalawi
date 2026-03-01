@@ -13,24 +13,23 @@
 </section>
 
 <!-- Categories section -->
-<section class="categories">
+<section class="category-arc-section" id="category-arc-section">
     <div class="section-title">
         <h2>Shop By Category</h2>
         <p>Find exactly what you need from our carefully curated collections</p>
+        <p>The Premium selection of gaming products</p>
     </div>
-    
-    <div class="categories-grid">
-        <% categories.forEach(category => { %>
-            <div class="category-card animate-on-scroll">
-                <div class="category-img">
-                    <i class="<%= category.icon %>"></i>
+
+    <div class="category-arc-track" id="category-arc-track" aria-label="Shop by category carousel">
+        <% categories.forEach((category, index) => { %>
+            <article class="category-arc-card" data-category-card style="--index:<%= index %>;">
+                <div class="category-arc-icon-wrap">
+                    <i class="<%= category.icon %> category-arc-icon"></i>
                 </div>
-                <div class="category-content">
-                    <h3><%= category.name %></h3>
-                    <p><%= category.description %></p>
-                    <a href="/category/<%= category.slug %>" class="btn" style="padding: 10px 25px;">Shop Now</a>
-                </div>
-            </div>
+                <h3><%= category.name %></h3>
+                <p><%= category.description %></p>
+                <a href="/category/<%= category.slug %>" class="category-arc-btn">Shop Now</a>
+            </article>
         <% }) %>
     </div>
 </section>
@@ -53,6 +52,9 @@
                             <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
                         </span>
                     <% } %>
+                    <button class="product-cart-icon" type="button" data-product-id="<%= product.id %>" aria-label="Add <%= product.name %> to cart">
+                        <i class="fas fa-shopping-cart"></i>
+                    </button>
                     
                     <div class="product-img">
                         <img src="<%= product.image_url %>" alt="<%= product.name %>">
@@ -70,11 +72,8 @@
                         </div>
                         
                         <div class="product-actions">
-                            <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
-                                Add to Cart
-                            </button>
-                            <button class="action-btn view-details" data-product-id="<%= product.id %>">
-                                Details
+                            <button class="action-btn shop-now-btn" data-product-id="<%= product.id %>">
+                                Shop Now
                             </button>
                         </div>
                     </div>
@@ -113,6 +112,9 @@
                             <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
                         </span>
                     <% } %>
+                    <button class="product-cart-icon" type="button" data-product-id="<%= product.id %>" aria-label="Add <%= product.name %> to cart">
+                        <i class="fas fa-shopping-cart"></i>
+                    </button>
                     
                     <div class="product-img">
                         <img src="<%= product.image_url %>" alt="<%= product.name %>">
@@ -130,11 +132,8 @@
                         </div>
                         
                         <div class="product-actions">
-                            <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
-                                Add to Cart
-                            </button>
-                            <button class="action-btn view-details" data-product-id="<%= product.id %>">
-                                Details
+                            <button class="action-btn shop-now-btn" data-product-id="<%= product.id %>">
+                                Shop Now
                             </button>
                         </div>
                     </div>

@@ -1,5 +1,6 @@
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
+    injectCsrfIntoForms();
     // Mobile menu toggle
     const mobileToggle = document.getElementById('mobile-toggle');
     const navMenu = document.getElementById('nav-menu');
@@ -30,10 +31,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add to cart buttons
-    document.querySelectorAll('.add-to-cart').forEach(button => {
+    document.querySelectorAll('.add-to-cart, .product-cart-icon').forEach(button => {
         button.addEventListener('click', function() {
             const productId = this.getAttribute('data-product-id');
             addToCart(productId, 1);
+        });
+    });
+
+    // Shop now: quick-buy one item then go straight to checkout
+    document.querySelectorAll('.shop-now-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            shopNow(productId, 1);
         });
     });
 
@@ -45,6 +54,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const productId = this.getAttribute('data-product-id');
             viewProductDetails(productId);
         });
+    });
+
+    // Open product details on double-clicking a product card
+    document.addEventListener('dblclick', function(e) {
+        const productCard = e.target.closest('.product-card[data-product-id]');
+        if (!productCard) return;
+
+        // Ignore interactive elements inside the card
+        if (e.target.closest('button, a, input, textarea, select, label, form')) return;
+
+        const productId = productCard.getAttribute('data-product-id');
+        if (productId) viewProductDetails(productId);
     });
 
     // User dropdown: toggle on click instead of hover
@@ -140,11 +161,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize any other components
     initComponents();
+    initCategoryArcCarousel();
+    initSubmitLoadingStates();
+    initProductDetailPage();
+    initCheckoutPage();
 });
 
 // Add to cart function
 function addToCart(productId, quantity = 1) {
-    fetch('/cart/add', {
+    apiFetch('/cart/add', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -185,7 +210,7 @@ function addToCart(productId, quantity = 1) {
 
 // Update cart item on server
 function updateCartItemServer(productId, quantity) {
-    fetch('/cart/update', {
+    apiFetch('/cart/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, quantity })
@@ -209,7 +234,7 @@ function updateCartItemServer(productId, quantity) {
 
 // Remove cart item on server
 function removeFromCartServer(productId) {
-    fetch('/cart/remove', {
+    apiFetch('/cart/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId })
@@ -282,9 +307,238 @@ function initComponents() {
     console.log('GameLootMalawi initialized');
 }
 
+function initCategoryArcCarousel() {
+    const section = document.getElementById('category-arc-section');
+    const track = document.getElementById('category-arc-track');
+    if (!section || !track) return;
+
+    const cards = Array.from(track.querySelectorAll('[data-category-card]'));
+    if (!cards.length) return;
+
+    function syncArcState() {
+        const rect = track.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const isMobile = window.innerWidth <= 768;
+        const maxYOffset = isMobile ? 28 : 58;
+        const maxTilt = isMobile ? 9 : 15;
+        const maxTiltY = isMobile ? 13 : 21;
+        const maxDepth = isMobile ? 28 : 66;
+        const centerBoost = isMobile ? 0.27 : 0.34;
+
+        let bestCard = null;
+        let bestDistance = Number.POSITIVE_INFINITY;
+
+        cards.forEach((card) => {
+            const cardRect = card.getBoundingClientRect();
+            const cardCenter = cardRect.left + cardRect.width / 2;
+            const raw = (cardCenter - centerX) / (rect.width * 0.5);
+            const norm = Math.max(-1, Math.min(1, raw));
+            const absNorm = Math.abs(norm);
+
+            const scale = 0.9 + ((1 - absNorm) * centerBoost);
+            const y = Math.pow(absNorm, 1.25) * maxYOffset;
+            const tilt = -norm * maxTilt;
+            const tiltY = norm * maxTiltY;
+            const depth = (1 - absNorm) * maxDepth;
+            const glow = 1 - absNorm;
+            const parallax = -norm * 6;
+
+            card.style.setProperty('--card-scale', scale.toFixed(3));
+            card.style.setProperty('--card-shift-y', `${y.toFixed(1)}px`);
+            card.style.setProperty('--card-tilt', `${tilt.toFixed(2)}deg`);
+            card.style.setProperty('--card-tilt-y', `${tiltY.toFixed(2)}deg`);
+            card.style.setProperty('--card-depth', `${depth.toFixed(1)}px`);
+            card.style.setProperty('--card-glow', glow.toFixed(2));
+            card.style.setProperty('--icon-parallax', `${parallax.toFixed(1)}px`);
+
+            if (absNorm < bestDistance) {
+                bestDistance = absNorm;
+                bestCard = card;
+            }
+        });
+
+        cards.forEach((card) => card.classList.remove('is-center'));
+        if (bestCard) bestCard.classList.add('is-center');
+    }
+
+    const onScroll = () => requestAnimationFrame(syncArcState);
+    track.addEventListener('scroll', onScroll, { passive: true });
+
+    track.addEventListener('wheel', (e) => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        e.preventDefault();
+        track.scrollLeft += e.deltaY;
+    }, { passive: false });
+
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                section.classList.add('is-ready');
+                io.disconnect();
+            }
+        });
+    }, { threshold: 0.2 });
+    io.observe(section);
+
+    // Start centered around middle card for the semicircle showcase
+    const middleCard = cards[Math.floor(cards.length / 2)];
+    if (middleCard) {
+        track.scrollLeft = Math.max(0, middleCard.offsetLeft - ((track.clientWidth - middleCard.clientWidth) / 2));
+    }
+
+    syncArcState();
+    window.addEventListener('resize', () => requestAnimationFrame(syncArcState));
+}
+
 // Utility function to format currency
 function formatCurrency(amount) {
     return 'MK ' + amount.toLocaleString();
+}
+
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
+function apiFetch(url, options = {}) {
+    const opts = { ...options };
+    opts.headers = { ...(options.headers || {}) };
+    const token = getCsrfToken();
+    if (token) opts.headers['X-CSRF-Token'] = token;
+    return fetch(url, opts);
+}
+
+function injectCsrfIntoForms() {
+    const token = getCsrfToken();
+    if (!token) return;
+    document.querySelectorAll('form').forEach((form) => {
+        if (form.querySelector('input[name="_csrf"]')) return;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = '_csrf';
+        input.value = token;
+        form.appendChild(input);
+    });
+}
+
+function initSubmitLoadingStates() {
+    document.querySelectorAll('form[data-loading-submit="1"]').forEach((form) => {
+        const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+        if (!submitBtn) return;
+
+        form.addEventListener('submit', () => {
+            if (form.dataset.submitting === '1') return;
+            form.dataset.submitting = '1';
+            submitBtn.disabled = true;
+            const loadingText = form.getAttribute('data-loading-text') || 'Processing...';
+            if (submitBtn.tagName.toLowerCase() === 'button') {
+                if (!submitBtn.dataset.originalText) submitBtn.dataset.originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
+            } else {
+                if (!submitBtn.dataset.originalValue) submitBtn.dataset.originalValue = submitBtn.value;
+                submitBtn.value = loadingText;
+            }
+        });
+    });
+}
+
+function initProductDetailPage() {
+    const decreaseBtn = document.getElementById('decrease-qty');
+    const increaseBtn = document.getElementById('increase-qty');
+    const quantityInput = document.getElementById('product-qty');
+    const addToCartBtn = document.getElementById('add-to-cart-detail');
+    if (!decreaseBtn || !increaseBtn || !quantityInput || !addToCartBtn) return;
+
+    decreaseBtn.addEventListener('click', () => {
+        const qty = parseInt(quantityInput.value, 10) || 1;
+        if (qty > 1) quantityInput.value = qty - 1;
+    });
+
+    increaseBtn.addEventListener('click', () => {
+        const qty = parseInt(quantityInput.value, 10) || 1;
+        const maxStock = parseInt(quantityInput.getAttribute('max'), 10) || qty;
+        if (qty < maxStock) quantityInput.value = qty + 1;
+    });
+
+    addToCartBtn.addEventListener('click', () => {
+        const productId = addToCartBtn.getAttribute('data-product-id');
+        const quantity = Math.max(1, parseInt(quantityInput.value, 10) || 1);
+        addToCart(productId, quantity);
+    });
+}
+
+function initCheckoutPage() {
+    const form = document.getElementById('checkout-form');
+    if (!form) return;
+
+    const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+    const receiptGroup = document.getElementById('payment-receipt-group');
+    const receiptInput = document.getElementById('paymentReceipt');
+    const popup = document.getElementById('processing-popup');
+    const popupMessage = document.getElementById('processing-message');
+
+    function getPaymentMethod() {
+        const checked = document.querySelector('input[name="paymentMethod"]:checked');
+        return checked ? checked.value : 'shop_pay';
+    }
+
+    function toggleReceiptField() {
+        const needReceipt = getPaymentMethod() === 'shop_pay';
+        if (receiptGroup) receiptGroup.style.display = needReceipt ? 'block' : 'none';
+        if (receiptInput) receiptInput.required = needReceipt;
+    }
+
+    paymentRadios.forEach(r => r.addEventListener('change', toggleReceiptField));
+    toggleReceiptField();
+
+    form.addEventListener('submit', function(e) {
+        if (form.dataset.submitting === '1') return;
+
+        const method = getPaymentMethod();
+        if (method === 'shop_pay' && receiptInput && !receiptInput.files.length) {
+            e.preventDefault();
+            showNotification('Please upload your transaction receipt for bank/mobile money transfer.', 'error');
+            return;
+        }
+
+        e.preventDefault();
+        form.dataset.submitting = '1';
+        if (popup) {
+            popup.style.display = 'flex';
+            if (popupMessage) {
+                popupMessage.textContent = method === 'cash_on_delivery'
+                    ? 'Order being processed...'
+                    : 'Uploading receipt and processing your order...';
+            }
+        }
+        setTimeout(() => form.submit(), 200);
+    });
+}
+
+function shopNow(productId, quantity = 1) {
+    apiFetch('/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId, quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const cartCountEl = document.querySelector('.cart-count');
+            if (cartCountEl && typeof data.cartCount !== 'undefined') {
+                cartCountEl.textContent = data.cartCount;
+            }
+            window.location.href = '/checkout';
+        } else {
+            showNotification(data.message || 'Unable to proceed to checkout', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Shop now error:', error);
+        showNotification('Error processing Shop Now', 'error');
+    });
 }
 
 function initCatchMeController(controller, hero) {
@@ -350,7 +604,7 @@ function initCatchMeController(controller, hero) {
 
     async function loadProgress() {
         try {
-            const response = await fetch('/rewards/status');
+            const response = await apiFetch('/rewards/status');
             const data = await response.json();
             if (data.success && data.progress) setProgressText(data.progress);
         } catch (err) {
@@ -362,7 +616,7 @@ function initCatchMeController(controller, hero) {
         if (locked) return;
         locked = true;
         try {
-            const response = await fetch('/rewards/catch', {
+            const response = await apiFetch('/rewards/catch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})

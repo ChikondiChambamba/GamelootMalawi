@@ -1,4 +1,4 @@
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" data-admin-orders="1">
   <div class="row mb-4">
     <div class="col">
       <h2>Order Management</h2>
@@ -40,49 +40,3 @@
   </div>
 </div>
 
- 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  // View buttons
-  document.querySelectorAll('.view-order').forEach(btn => {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      const id = this.getAttribute('data-order-id');
-      if (!id) return;
-      // Open detail in same tab for easier admin workflow
-      window.location.href = '/orders/' + id;
-    });
-  });
-
-  // Change status buttons
-  document.querySelectorAll('.change-status').forEach(btn => {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      const id = this.getAttribute('data-order-id');
-      if (!id) return;
-
-      const newStatus = prompt('Enter new status (pending, confirmed, shipped, delivered, cancelled):');
-      if (!newStatus) return;
-
-      fetch('/admin/orders/' + id + '/status', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      })
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) {
-          // show a quick confirmation and refresh
-          alert('Status updated');
-          location.reload();
-        } else {
-          alert('Error: ' + (json.message || 'Could not update status'));
-        }
-      }).catch(err => {
-        console.error(err);
-        alert('Request failed');
-      });
-    });
-  });
-});
-</script>

@@ -185,6 +185,53 @@ module.exports = function createAccountRouter({
     }
   });
 
+  router.post('/profile', async (req, res) => {
+    if (!req.session.user) {
+      req.flash('error', 'Please login to update your profile');
+      return res.redirect('/login');
+    }
+
+    const name = String(req.body.name || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const phone = String(req.body.phone || '').trim();
+    const address = String(req.body.address || '').trim();
+
+    if (!name || !email) {
+      req.flash('error', 'Username and email are required');
+      return res.redirect('/profile');
+    }
+
+    try {
+      const existingUser = await User.findByEmail(email);
+      if (existingUser && Number(existingUser.id) !== Number(req.session.user.id)) {
+        req.flash('error', 'That email is already in use by another account');
+        return res.redirect('/profile');
+      }
+
+      const updatedUser = await User.update(req.session.user.id, {
+        name,
+        email,
+        phone,
+        address
+      });
+
+      req.session.user = {
+        ...req.session.user,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || '',
+        address: updatedUser.address || ''
+      };
+
+      req.flash('success', 'Profile updated successfully');
+      return res.redirect('/profile');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      req.flash('error', 'Could not update profile');
+      return res.redirect('/profile');
+    }
+  });
+
   router.get('/orders', async (req, res) => {
     if (!req.session.user) {
       req.flash('error', 'Please login to view your orders');
@@ -310,4 +357,3 @@ module.exports = function createAccountRouter({
 
   return router;
 };
-

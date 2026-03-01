@@ -1,0 +1,26 @@
+<section class="checkout-page">
+  <div class="page-header">
+    <h1>Order Confirmed</h1>
+    <div class="breadcrumb">
+      <a href="/">Home</a> / <span>Order Confirmation</span>
+    </div>
+  </div>
+
+  <div class="checkout-layout">
+    <div class="checkout-form-section" style="text-align:center;">
+      <div style="font-size:56px;color:var(--success);margin-bottom:0.5rem;">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3 style="margin-bottom:0.75rem;color:var(--primary);">Your order is being processed</h3>
+      <p style="color:var(--gray);margin-bottom:0.8rem;">Order Number: <strong><%= orderNumber %></strong></p>
+      <p style="color:var(--gray);margin-bottom:0.8rem;">Total: <strong>MWK <%= Number(totalAmount || 0).toLocaleString() %></strong></p>
+      <p style="color:var(--gray);margin-bottom:1.6rem;">A confirmation has been prepared for: <strong><%= customerEmail %></strong></p>
+      <div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;">
+        <% if (currentUser) { %>
+          <a href="/orders" class="btn">View My Orders</a>
+        <% } %>
+        <a href="/shop" class="btn btn-outline">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,10 +1,13 @@
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 require('dotenv').config();
+const logger = require('./utils/logger');
+const { ensureCsrfToken, verifyCsrf } = require('./middleware/csrf');
 
 const Cart = require('./models/Cart');
 const {
@@ -81,6 +84,27 @@ app.use(session({
 }));
 
 app.use(flash());
+app.use(ensureCsrfToken);
+app.use(verifyCsrf);
+
+app.get('/health', (req, res) => {
+  const uploadsDir = path.join(__dirname, 'public', 'uploads');
+  let uploadsWritable = true;
+  try {
+    fs.accessSync(uploadsDir, fs.constants.W_OK);
+  } catch (e) {
+    uploadsWritable = false;
+  }
+
+  res.status(200).json({
+    ok: true,
+    service: 'gamelootmalawi',
+    env: process.env.NODE_ENV || 'development',
+    uploads_writable: uploadsWritable,
+    uptime_sec: Math.round(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use(async (req, res, next) => {
   res.locals.currentUser = (req.session && req.session.user) ? req.session.user : null;
@@ -105,8 +129,23 @@ app.use(async (req, res, next) => {
       console.error('Error getting cart count:', err);
       res.locals.cartCount = 0;
     }
+  } else if (req.session && Array.isArray(req.session.guestCart)) {
+    res.locals.cartCount = req.session.guestCart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
   }
 
+  next();
+});
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    logger.info('request', {
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      ms: Date.now() - start
+    });
+  });
   next();
 });
 
@@ -131,7 +170,7 @@ app.use('/api/orders', apiOrderRoutes);
 app.use('/api/categories', apiCategoryRoutes);
 
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  logger.error('unhandled_error', { message: err && err.message, stack: err && err.stack });
   if (req.xhr || (req.headers && req.headers.accept && req.headers.accept.includes('json'))) {
     return res.status(err.status || 500).json({ success: false, message: 'Server error' });
   }
@@ -145,6 +184,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Visit: http://localhost:${PORT}`);
+  logger.info('server_started', { port: PORT, url: `http://localhost:${PORT}` });
 });

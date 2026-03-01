@@ -57,6 +57,9 @@
                                 <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
                             </span>
                         <% } %>
+                        <button class="product-cart-icon" type="button" data-product-id="<%= product.id %>" aria-label="Add <%= product.name %> to cart">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
                         
                         <div class="product-img">
                             <img src="<%= product.image_url %>" alt="<%= product.name %>">
@@ -75,11 +78,8 @@
                             </div>
                             
                             <div class="product-actions">
-                                <button class="action-btn add-to-cart" data-product-id="<%= product.id %>">
-                                    Add to Cart
-                                </button>
-                                <button class="action-btn view-details" data-product-id="<%= product.id %>">
-                                    Details
+                                <button class="action-btn shop-now-btn" data-product-id="<%= product.id %>">
+                                    Shop Now
                                 </button>
                             </div>
                         </div>

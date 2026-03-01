@@ -1,0 +1,47 @@
+<section class="products">
+  <div class="products-header">
+    <div class="section-title" style="text-align:left;margin-bottom:0;">
+      <h2>Payment Settings</h2>
+      <p>Configure payment details shown during checkout</p>
+    </div>
+  </div>
+
+  <% if (saved) { %>
+    <div class="alert alert-success" role="alert" style="max-width: 800px; margin: 0 auto 1rem auto;">
+      Payment settings saved successfully.
+    </div>
+  <% } %>
+
+  <div class="deal-admin-card" style="max-width: 800px; margin: 0 auto;">
+    <% if (settings && settings.updated_at) { %>
+      <p style="margin-bottom: 1rem; color: var(--gray);">Last updated: <%= new Date(settings.updated_at).toLocaleString() %></p>
+    <% } %>
+    <form action="/admin/payment-settings" method="POST" class="deal-admin-form" data-loading-submit="1" data-loading-text="Saving Settings...">
+      <label>Bank Name</label>
+      <input type="text" name="bank_name" value="<%= settings?.bank_name || '' %>">
+
+      <label>Bank Account Name</label>
+      <input type="text" name="bank_account_name" value="<%= settings?.bank_account_name || '' %>">
+
+      <label>Bank Account Number</label>
+      <input type="text" name="bank_account_number" value="<%= settings?.bank_account_number || '' %>">
+
+      <label>Mobile Money Provider</label>
+      <input type="text" name="mobile_money_provider" value="<%= settings?.mobile_money_provider || '' %>">
+
+      <label>Mobile Money Code / Number</label>
+      <input type="text" name="mobile_money_code" value="<%= settings?.mobile_money_code || '' %>">
+
+      <label>Inquiries Phone</label>
+      <input type="text" name="inquiry_phone" value="<%= settings?.inquiry_phone || '' %>">
+
+      <label>Inquiries Email</label>
+      <input type="email" name="inquiry_email" value="<%= settings?.inquiry_email || '' %>">
+
+      <label>Checkout Notes</label>
+      <textarea name="notes" rows="4"><%= settings?.notes || '' %></textarea>
+
+      <button type="submit" class="btn">Save Payment Settings</button>
+    </form>
+  </div>
+</section>

@@ -3,6 +3,7 @@ const multer = require('multer');
 const db = require('../../config/database');
 const Product = require('../../models/Product');
 const Order = require('../../models/order');
+const PaymentSettings = require('../../models/PaymentSettings');
 const { isAdmin } = require('../../middleware/auth2');
 const { getCachedCategories } = require('../../utils/categoryService');
 
@@ -268,6 +269,38 @@ router.get('/admin', isAdmin, async (req, res) => {
     console.error('Admin dashboard error:', error);
     req.flash('error', 'Error loading admin dashboard');
     return res.redirect('/');
+  }
+});
+
+router.get('/admin/payment-settings', isAdmin, async (req, res) => {
+  try {
+    const settings = await PaymentSettings.get();
+    const saved = req.query.saved === '1';
+    return res.render('layout', {
+      title: 'Payment Settings - Admin',
+      content: 'pages/admin-payment-settings',
+      settings,
+      saved,
+      success: req.flash('success'),
+      error: req.flash('error'),
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Admin payment settings page error:', error);
+    req.flash('error', 'Could not load payment settings');
+    return res.redirect('/admin');
+  }
+});
+
+router.post('/admin/payment-settings', isAdmin, async (req, res) => {
+  try {
+    await PaymentSettings.update(req.body);
+    req.flash('success', 'Payment settings updated');
+    return res.redirect('/admin/payment-settings?saved=1');
+  } catch (error) {
+    console.error('Update payment settings error:', error);
+    req.flash('error', 'Could not update payment settings');
+    return res.redirect('/admin/payment-settings');
   }
 });
 

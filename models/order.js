@@ -1,6 +1,24 @@
 const db = require('../config/database');
 
 class Order {
+  static parseOrderItems(rawItems) {
+    if (!rawItems) return [];
+    if (Array.isArray(rawItems)) return rawItems.filter((item) => item && item.product_id !== null);
+    if (typeof rawItems === 'object') return [rawItems].filter((item) => item && item.product_id !== null);
+
+    if (typeof rawItems === 'string') {
+      try {
+        const parsed = JSON.parse(rawItems);
+        if (Array.isArray(parsed)) return parsed.filter((item) => item && item.product_id !== null);
+        if (parsed && typeof parsed === 'object' && parsed.product_id !== null) return [parsed];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    return [];
+  }
+
   // Create new order
   static async create(orderData, items) {
     const connection = await db.getConnection();
@@ -11,23 +29,51 @@ class Order {
       // Generate order number
       const orderNumber = 'GLM' + Date.now();
 
-      // Insert order
-      const [orderResult] = await connection.execute(`
-        INSERT INTO orders (
-          user_id, order_number, total_amount, shipping_address, billing_address,
-          customer_name, customer_email, customer_phone, payment_method
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        orderData.user_id,
-        orderNumber,
-        orderData.total_amount,
-        orderData.shipping_address,
-        orderData.billing_address,
-        orderData.customer_name,
-        orderData.customer_email,
-        orderData.customer_phone,
-        orderData.payment_method
-      ]);
+      // Insert order. Some deployments may not have the "notes" column yet,
+      // so we gracefully retry without it instead of failing checkout.
+      let orderResult;
+      try {
+        const [resultWithNotes] = await connection.execute(`
+          INSERT INTO orders (
+            user_id, order_number, total_amount, shipping_address, billing_address,
+            customer_name, customer_email, customer_phone, payment_method, notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          orderData.user_id,
+          orderNumber,
+          orderData.total_amount,
+          orderData.shipping_address,
+          orderData.billing_address,
+          orderData.customer_name,
+          orderData.customer_email,
+          orderData.customer_phone,
+          orderData.payment_method,
+          orderData.notes || null
+        ]);
+        orderResult = resultWithNotes;
+      } catch (insertErr) {
+        const msg = String(insertErr && insertErr.message ? insertErr.message : '').toLowerCase();
+        const unknownNotesColumn = msg.includes('unknown column') && msg.includes('notes');
+        if (!unknownNotesColumn) throw insertErr;
+
+        const [resultWithoutNotes] = await connection.execute(`
+          INSERT INTO orders (
+            user_id, order_number, total_amount, shipping_address, billing_address,
+            customer_name, customer_email, customer_phone, payment_method
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          orderData.user_id,
+          orderNumber,
+          orderData.total_amount,
+          orderData.shipping_address,
+          orderData.billing_address,
+          orderData.customer_name,
+          orderData.customer_email,
+          orderData.customer_phone,
+          orderData.payment_method
+        ]);
+        orderResult = resultWithoutNotes;
+      }
 
       const orderId = orderResult.insertId;
 
@@ -75,7 +121,7 @@ class Order {
     if (orders.length === 0) return null;
 
     const order = orders[0];
-    order.items = JSON.parse(order.items).filter(item => item.product_id !== null);
+    order.items = this.parseOrderItems(order.items);
     return order;
   }
 

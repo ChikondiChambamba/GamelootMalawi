@@ -1,4 +1,4 @@
-<div class="container py-4">
+<div class="container py-4" data-admin-order-detail="1" data-order-id="<%= order.id %>">
   <div class="row mb-3">
     <div class="col-8">
       <h2>Order Details</h2>
@@ -64,20 +64,3 @@
   </div>
 </div>
 
-<script>
-document.getElementById('save-status').addEventListener('click', function() {
-  const status = document.getElementById('status-select').value;
-  fetch('/admin/orders/<%= order.id %>/status', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
-  }).then(r => r.json()).then(j => {
-    if (j.success) {
-      alert('Status updated');
-      location.reload();
-    } else {
-      alert('Error updating status: ' + (j.message || 'unknown'));
-    }
-  }).catch(e => { console.error(e); alert('Request failed'); });
-});
-</script>

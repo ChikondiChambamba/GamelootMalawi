@@ -37,11 +37,15 @@ if (!fs.existsSync(tmpDir)) {
   try { fs.mkdirSync(tmpDir, { recursive: true }); } catch (e) { /* ignore */ }
 }
 
-async function sendMail(to, subject, html) {
+async function sendMail(to, subject, html, options = {}) {
   const from = process.env.SMTP_FROM || 'no-reply@gamelootmalawi.com';
+  const attachments = Array.isArray(options.attachments) ? options.attachments : [];
 
   if (!transporter || useFallback) {
-    const entry = `--\nTo: ${to}\nFrom: ${from}\nSubject: ${subject}\nDate: ${new Date().toISOString()}\n\n${html}\n`;
+    const attachmentList = attachments.length
+      ? `\nAttachments: ${attachments.map((a) => a.filename || 'file').join(', ')}\n`
+      : '\n';
+    const entry = `--\nTo: ${to}\nFrom: ${from}\nSubject: ${subject}\nDate: ${new Date().toISOString()}${attachmentList}\n${html}\n`;
     // log to console for developers
     console.log('[MAILER FALLBACK] Email content:\n', entry);
     // append to file for easier inspection
@@ -53,7 +57,7 @@ async function sendMail(to, subject, html) {
     return Promise.resolve({ accepted: [to], fallback: true });
   }
 
-  const mailOptions = { from, to, subject, html };
+  const mailOptions = { from, to, subject, html, attachments };
   return transporter.sendMail(mailOptions);
 }
 

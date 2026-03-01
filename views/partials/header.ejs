@@ -8,7 +8,7 @@
     <div class="header-container">
         <div class="logo">
             <a href="/">
-                <img src="/images/logo/GAMELOOT%20LOGO%20blue%20black.png" alt="GameLootMalawi Logo">
+                <img src="/images/logo/GAMELOOT LOGO TP.png" alt="GameLootMalawi Logo">
             </a>
         </div>
         
@@ -42,6 +42,7 @@
                                 <a href="/admin">Admin Dashboard</a>
                                 <a href="/admin/orders">Manage Orders</a>
                                 <a href="/admin/deals">Manage Deals</a>
+                                <a href="/admin/payment-settings">Payment Settings</a>
                             </div>
                             <div class="dropdown-divider"></div>
                         <% } %>
@@ -60,10 +61,10 @@
                 </div>
             <% } %>
             
-            <div class="nav-icon" id="cart-icon">
+            <a class="nav-icon auth-link" id="cart-icon" href="/cart" aria-label="Open cart">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count"><%= cc %></span>
-            </div>
+            </a>
             
             <div class="mobile-toggle" id="mobile-toggle">
                 <i class="fas fa-bars"></i>

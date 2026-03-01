@@ -54,9 +54,23 @@
 
       <div class="profile-card">
         <h3>Account</h3>
-        <p>Name: <%= user.name %></p>
-        <p>Email: <%= user.email %></p>
-        <p>Joined: <%= user.created_at ? user.created_at : 'N/A' %></p>
+        <form action="/profile" method="POST" class="deal-admin-form" data-loading-submit="1" data-loading-text="Saving Profile...">
+          <label for="profile-name">Username</label>
+          <input id="profile-name" type="text" name="name" value="<%= user.name || '' %>" required>
+
+          <label for="profile-email">Email</label>
+          <input id="profile-email" type="email" name="email" value="<%= user.email || '' %>" required>
+
+          <label for="profile-phone">Phone Number</label>
+          <input id="profile-phone" type="text" name="phone" value="<%= user.phone || '' %>">
+
+          <label for="profile-location">Location</label>
+          <input id="profile-location" type="text" name="address" value="<%= user.address || '' %>">
+
+          <button type="submit" class="btn">Save Profile</button>
+        </form>
+
+        <p style="margin-top: 1rem; color: var(--gray);">Joined: <%= user.created_at ? user.created_at : 'N/A' %></p>
       </div>
     </div>
   </div>

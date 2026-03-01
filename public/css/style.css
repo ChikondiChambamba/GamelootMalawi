@@ -396,6 +396,7 @@ nav a:hover::after, nav a.active::after {
     pointer-events: auto;
     will-change: top, left, transform;
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -545,6 +546,191 @@ nav a:hover::after, nav a.active::after {
 .category-content p {
     color: var(--gray);
     margin-bottom: 1rem;
+}
+
+/* Arc Category Carousel (Home) */
+.category-arc-section {
+    padding: 5rem 5%;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0, 195, 255, 0.14), transparent 40%),
+        radial-gradient(circle at 80% 10%, rgba(42, 10, 94, 0.18), transparent 44%),
+        linear-gradient(180deg, #fbfbff 0%, #f0f2fb 100%);
+    overflow: visible;
+}
+
+.category-arc-track {
+    --arc-card-width: 260px;
+    display: flex;
+    gap: 2.5rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 5.2rem max(8vw, 70px) 4rem;
+    margin: 0 auto;
+    max-width: 1400px;
+    perspective: 1400px;
+    transform-style: preserve-3d;
+}
+
+.category-arc-track::-webkit-scrollbar {
+    height: 8px;
+}
+
+.category-arc-track::-webkit-scrollbar-thumb {
+    background: rgba(42, 10, 94, 0.35);
+    border-radius: 99px;
+}
+
+.category-arc-card {
+    --card-scale: 0.92;
+    --card-shift-y: 44px;
+    --card-tilt: 0deg;
+    --card-tilt-y: 0deg;
+    --card-depth: 0px;
+    --card-glow: 0.25;
+    --icon-parallax: 0px;
+    flex: 0 0 var(--arc-card-width);
+    min-height: 320px;
+    scroll-snap-align: center;
+    position: relative;
+    border-radius: 22px;
+    padding: 1.1rem 1.1rem 1.4rem;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 16px 35px rgba(16, 22, 42, 0.1);
+    backdrop-filter: blur(8px);
+    transform-origin: 50% 100%;
+    transform:
+        translateY(var(--card-shift-y))
+        translateZ(var(--card-depth))
+        rotateY(var(--card-tilt-y))
+        rotateZ(var(--card-tilt))
+        scale(var(--card-scale));
+    transition:
+        transform 0.45s ease-in-out,
+        box-shadow 0.45s ease-in-out,
+        filter 0.45s ease-in-out;
+    filter: saturate(0.92) brightness(0.98);
+}
+
+.category-arc-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 195, 255, calc(var(--card-glow) * 0.4));
+}
+
+.category-arc-card.is-center {
+    box-shadow:
+        0 24px 56px rgba(17, 26, 59, 0.2),
+        0 0 28px rgba(0, 195, 255, 0.2);
+    filter: saturate(1.06) brightness(1);
+}
+
+.category-arc-icon-wrap {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, rgba(42, 10, 94, 0.95), rgba(74, 22, 148, 0.9));
+    box-shadow: 0 10px 24px rgba(42, 10, 94, 0.35);
+    margin-bottom: 1rem;
+    transform: translateY(var(--icon-parallax));
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.category-arc-icon {
+    font-size: 1.65rem;
+    color: #fff;
+}
+
+.category-arc-card h3 {
+    font-size: 1.4rem;
+    color: var(--primary);
+    margin-bottom: 0.45rem;
+}
+
+.category-arc-card p {
+    font-size: 0.95rem;
+    color: #616a7d;
+    min-height: 52px;
+}
+
+.category-arc-btn {
+    margin-top: 1.1rem;
+    display: inline-block;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b00, #ff8c2b);
+    padding: 11px 20px;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(255, 107, 0, 0.35);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.category-arc-card:hover {
+    transform:
+        translateY(calc(var(--card-shift-y) - 14px))
+        translateZ(calc(var(--card-depth) + 12px))
+        rotateY(var(--card-tilt-y))
+        rotateZ(var(--card-tilt))
+        scale(calc(var(--card-scale) + 0.02));
+}
+
+.category-arc-card:hover .category-arc-icon-wrap {
+    transform: translateY(calc(var(--icon-parallax) - 4px)) scale(1.04);
+    box-shadow: 0 13px 28px rgba(42, 10, 94, 0.45);
+}
+
+.category-arc-card:hover .category-arc-icon {
+    animation: iconPulse 0.7s ease;
+}
+
+.category-arc-card:hover .category-arc-btn {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(255, 107, 0, 0.45);
+    filter: brightness(1.04);
+}
+
+.category-arc-section .category-arc-card {
+    opacity: 0;
+    transform:
+        translateY(calc(var(--card-shift-y) + 26px))
+        translateZ(var(--card-depth))
+        rotateY(var(--card-tilt-y))
+        rotateZ(var(--card-tilt))
+        scale(calc(var(--card-scale) - 0.04));
+}
+
+.category-arc-section.is-ready .category-arc-card {
+    opacity: 1;
+    transform:
+        translateY(var(--card-shift-y))
+        translateZ(var(--card-depth))
+        rotateY(var(--card-tilt-y))
+        rotateZ(var(--card-tilt))
+        scale(var(--card-scale));
+    transition:
+        transform 0.55s ease-in-out,
+        box-shadow 0.45s ease-in-out,
+        filter 0.45s ease-in-out,
+        opacity 0.45s ease;
+    transition-delay: calc(var(--index, 0) * 70ms);
+}
+
+@keyframes iconPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.13); }
+    100% { transform: scale(1); }
 }
 
 /* Products section */
@@ -764,6 +950,35 @@ body.nav-open {
 .view-details:hover {
     background: var(--primary);
     color: white;
+}
+
+.shop-now-btn {
+    width: 100%;
+}
+
+.product-cart-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(42, 10, 94, 0.95);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    transition: var(--transition);
+}
+
+.product-cart-icon:hover {
+    background: var(--secondary);
+    transform: translateY(-50%) scale(1.06);
 }
 
 /* Category-specific sections */
@@ -1340,6 +1555,29 @@ body.nav-open {
     gap: 1rem;
 }
 
+.payment-admin-info {
+    background: #f8f9ff;
+    border: 1px solid rgba(42, 10, 94, 0.12);
+    border-radius: 10px;
+    padding: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.payment-admin-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    font-size: 0.95rem;
+}
+
+.payment-admin-notes {
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed rgba(42, 10, 94, 0.2);
+    color: #535c6d;
+}
+
 .payment-option {
     display: flex;
     align-items: center;
@@ -1713,6 +1951,12 @@ footer {
     .checkout-layout {
         grid-template-columns: 1fr;
     }
+
+    .category-arc-track {
+        --arc-card-width: 230px;
+        gap: 1.55rem;
+        padding: 4.2rem 24px 2.8rem;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1750,7 +1994,7 @@ footer {
     .search-bar:focus-within {
         width: 235px;
     }
-    
+
     .detail-content {
         flex-direction: column;
     }
@@ -1772,6 +2016,25 @@ footer {
         width: 100%;
         overflow-x: auto;
         padding-bottom: 10px;
+    }
+
+    .category-arc-section {
+        padding: 4rem 4%;
+    }
+
+    .category-arc-track {
+        --arc-card-width: 205px;
+        gap: 1rem;
+        padding: 3.3rem 14px 2rem;
+    }
+
+    .category-arc-card {
+        min-height: 288px;
+        border-radius: 18px;
+    }
+
+    .category-arc-card h3 {
+        font-size: 1.2rem;
     }
 }
 

@@ -8,7 +8,8 @@
     
     <div class="checkout-layout">
         <div class="checkout-form-section">
-            <form id="checkout-form" action="/orders" method="POST">
+            <form id="checkout-form" action="/orders" method="POST" enctype="multipart/form-data" data-loading-submit="1" data-loading-text="Placing Order...">
+                <input type="hidden" name="orderNonce" value="<%= checkoutNonce %>">
                 <% if (!currentUser) { %>
                     <div class="checkout-section">
                         <h3>Account Information</h3>
@@ -61,33 +62,31 @@
                 </div>
                 
                 <div class="checkout-section">
-                    <h3>Payment Method</h3>
+                    <h3>Payment Instructions</h3>
+                    <p>Use the payment details below, then place your order. Our team will confirm your payment manually.</p>
+
+                    <div class="payment-admin-info">
+                        <div class="payment-admin-row"><strong>Bank Name:</strong> <span><%= paymentSettings?.bank_name || 'Not configured' %></span></div>
+                        <div class="payment-admin-row"><strong>Account Name:</strong> <span><%= paymentSettings?.bank_account_name || 'Not configured' %></span></div>
+                        <div class="payment-admin-row"><strong>Account Number:</strong> <span><%= paymentSettings?.bank_account_number || 'Not configured' %></span></div>
+                        <div class="payment-admin-row"><strong>Mobile Money:</strong> <span><%= paymentSettings?.mobile_money_provider || 'Not configured' %></span></div>
+                        <div class="payment-admin-row"><strong>Code/Number:</strong> <span><%= paymentSettings?.mobile_money_code || 'Not configured' %></span></div>
+                        <div class="payment-admin-row"><strong>Inquiries Phone:</strong> <span><%= paymentSettings?.inquiry_phone || 'Not configured' %></span></div>
+                        <div class="payment-admin-row"><strong>Inquiries Email:</strong> <span><%= paymentSettings?.inquiry_email || 'Not configured' %></span></div>
+                        <% if (paymentSettings?.notes) { %>
+                            <div class="payment-admin-notes"><%= paymentSettings.notes %></div>
+                        <% } %>
+                    </div>
                     
                     <div class="payment-options">
                         <label class="payment-option">
-                            <input type="radio" name="paymentMethod" value="credit_card" checked>
-                            <div class="payment-option-content">
-                                <i class="far fa-credit-card"></i>
-                                <span>Credit/Debit Card</span>
-                            </div>
-                        </label>
-                        
-                        <label class="payment-option">
-                            <input type="radio" name="paymentMethod" value="apple_pay">
-                            <div class="payment-option-content">
-                                <i class="fab fa-apple"></i>
-                                <span>Apple Pay</span>
-                            </div>
-                        </label>
-                        
-                        <label class="payment-option">
-                            <input type="radio" name="paymentMethod" value="shop_pay">
+                            <input type="radio" name="paymentMethod" value="shop_pay" checked>
                             <div class="payment-option-content">
                                 <i class="fas fa-wallet"></i>
-                                <span>Shop Pay</span>
+                                <span>Bank / Mobile Money Transfer</span>
                             </div>
                         </label>
-                        
+
                         <label class="payment-option">
                             <input type="radio" name="paymentMethod" value="cash_on_delivery">
                             <div class="payment-option-content">
@@ -95,6 +94,12 @@
                                 <span>Cash on Delivery</span>
                             </div>
                         </label>
+                    </div>
+
+                    <div class="form-group" id="payment-receipt-group">
+                        <label for="paymentReceipt">Upload Transaction Receipt *</label>
+                        <input type="file" id="paymentReceipt" name="paymentReceipt" accept=".jpg,.jpeg,.png,.webp,image/*">
+                        <small>Required for bank/mobile money transfer.</small>
                     </div>
                 </div>
                 
@@ -146,5 +151,12 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div id="processing-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:4000;align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:1.1rem 1.25rem;border-radius:10px;min-width:260px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,0.25);">
+        <h4 style="margin:0 0 0.5rem 0;color:var(--primary);">Order being processed</h4>
+        <p id="processing-message" style="margin:0;color:var(--gray);">Please wait...</p>
     </div>
 </div>
