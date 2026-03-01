@@ -301,7 +301,16 @@ module.exports = function createAccountRouter({
   });
 
   router.post('/register', createAccountLimiter, async (req, res) => {
-    const { name, email, password, confirmPassword } = req.body;
+    const name = String(req.body.name || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const confirmPassword = String(req.body.confirmPassword || '');
+
+    if (!name || !email || !password) {
+      req.flash('error', 'Name, email and password are required.');
+      return res.redirect('/register');
+    }
+
     if (password !== confirmPassword) {
       req.flash('error', 'Passwords do not match');
       return res.redirect('/register');
@@ -336,7 +345,15 @@ module.exports = function createAccountRouter({
       return res.redirect('/profile');
     } catch (error) {
       console.error('Registration error:', error);
-      req.flash('error', 'Registration failed. Please try again.');
+      if (error && error.code === 'ER_DUP_ENTRY') {
+        req.flash('error', 'Email already registered. Please login or use a different email.');
+      } else if (error && (error.code === 'ER_NO_SUCH_TABLE' || error.code === 'ER_BAD_DB_ERROR')) {
+        req.flash('error', 'Registration is temporarily unavailable (database not initialized).');
+      } else if (error && (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.code === 'PROTOCOL_CONNECTION_LOST')) {
+        req.flash('error', 'Could not reach database. Please try again in a moment.');
+      } else {
+        req.flash('error', 'Registration failed. Please try again.');
+      }
       return res.redirect('/register');
     }
   });

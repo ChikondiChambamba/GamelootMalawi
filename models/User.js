@@ -49,15 +49,15 @@ class User {
         'INSERT INTO users (name, email, password, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
         [name, email, hashedPassword, phone || '', address || '', role]
       );
-    } catch (error) {
-      if (!this.isMissingColumnError(error)) throw error;
+    } catch (errorFull) {
+      if (errorFull && errorFull.code === 'ER_DUP_ENTRY') throw errorFull;
       try {
         [result] = await db.execute(
           'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
           [name, email, hashedPassword, role]
         );
-      } catch (fallbackError) {
-        if (!this.isMissingColumnError(fallbackError)) throw fallbackError;
+      } catch (errorRoleOnly) {
+        if (errorRoleOnly && errorRoleOnly.code === 'ER_DUP_ENTRY') throw errorRoleOnly;
         [result] = await db.execute(
           'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
           [name, email, hashedPassword]
