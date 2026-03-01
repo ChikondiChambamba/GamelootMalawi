@@ -12,6 +12,14 @@ function ensureCsrfToken(req, res, next) {
 function verifyCsrf(req, res, next) {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
   if (req.path.startsWith('/api/')) return next();
+  if ([
+    '/login',
+    '/register',
+    '/logout',
+    '/forgot-password',
+    '/reset-password',
+    '/admin/payment-settings'
+  ].includes(req.path)) return next();
 
   const contentType = String(req.get('content-type') || '').toLowerCase();
   if (contentType.includes('multipart/form-data')) {
