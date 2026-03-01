@@ -36,7 +36,8 @@ function verifyCsrf(req, res, next) {
 
   if (req.flash && typeof req.flash === 'function') {
     req.flash('error', 'Session expired. Please try again.');
-    return res.redirect('back');
+    const referer = req.get('referer');
+    return res.redirect(referer || '/');
   }
   return res.status(403).send('Invalid CSRF token.');
 }
