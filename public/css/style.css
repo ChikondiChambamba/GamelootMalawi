@@ -64,7 +64,7 @@ header {
     align-items: center;
     justify-content: center;
     width: 200px;
-    height: 60px;
+    height: 50px;
     overflow: hidden;
     background: transparent;
     border-radius: 0;
@@ -248,8 +248,18 @@ nav a:hover::after, nav a.active::after {
 
     .dropdown-content { right: 10px; left: auto; }
 
-    .logo a { width: 180px; height: 44px; }
-    .logo img { transform: scale(2.7); }
+    .logo a {
+        width: 180px;
+        height: 56px;
+        overflow: visible;
+    }
+    .logo img {
+        width: 100%;
+        height: auto;
+        max-height: 100%;
+        object-fit: contain;
+        transform: scale(5.0);
+    }
 }
 
 /* User dropdown */
