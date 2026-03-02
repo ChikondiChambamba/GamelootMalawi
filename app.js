@@ -136,6 +136,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
+
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {

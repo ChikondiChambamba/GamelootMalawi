@@ -3,7 +3,10 @@ const router = express.Router();
 const { body } = require('express-validator');
 const productController = require('../controllers/productControllers');
 const { auth, adminAuth } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const localUpload = require('../middleware/upload');
+const { upload: cloudinaryUpload, hasCloudinaryEnv } = require('../config/cloudinaryConfig');
+
+const upload = hasCloudinaryEnv() ? cloudinaryUpload : localUpload;
 
 // Validation rules
 const productValidation = [

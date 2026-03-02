@@ -6,6 +6,7 @@ const Order = require('../../models/order');
 const PaymentSettings = require('../../models/PaymentSettings');
 const { isAdmin } = require('../../middleware/auth2');
 const { getCachedCategories } = require('../../utils/categoryService');
+const { upload: cloudinaryUpload, hasCloudinaryEnv } = require('../../config/cloudinaryConfig');
 
 const router = express.Router();
 
@@ -32,9 +33,12 @@ const upload = multer({
 });
 
 const uploadWithErrorHandler = (req, res, next) => {
-  upload.single('image')(req, res, (err) => {
+  const uploader = hasCloudinaryEnv() ? cloudinaryUpload : upload;
+  uploader.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      if (err.code === 'FILE_TOO_LARGE') return res.status(400).json({ success: false, message: 'File is too large (max 2MB)' });
+      if (err.code === 'LIMIT_FILE_SIZE' || err.code === 'FILE_TOO_LARGE') {
+        return res.status(400).json({ success: false, message: 'File is too large (max 2MB)' });
+      }
       return res.status(400).json({ success: false, message: `File upload error: ${err.message}` });
     }
     if (err) return res.status(400).json({ success: false, message: err.message });
@@ -66,7 +70,7 @@ router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res)
       category_id: parseInt(req.body.category_id, 10) || null,
       badge: req.body.badge || null,
       sku: req.body.sku || null,
-      image_url: req.file ? `/uploads/products/${req.file.filename}` : null,
+      image_url: req.file ? (req.file.path || `/uploads/products/${req.file.filename}`) : null,
       specifications,
       images: []
     };
@@ -120,7 +124,7 @@ router.put('/admin/products/:id', isAdmin, uploadWithErrorHandler, async (req, r
       specifications: specifications.length ? specifications : undefined
     };
 
-    if (req.file) productData.image_url = `/uploads/products/${req.file.filename}`;
+    if (req.file) productData.image_url = req.file.path || `/uploads/products/${req.file.filename}`;
 
     const updated = await Product.update(id, productData);
     return res.json({ success: true, message: 'Product updated', product: updated });

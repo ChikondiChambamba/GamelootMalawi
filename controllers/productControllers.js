@@ -6,9 +6,18 @@ const path = require('path');
 // Helper function to delete old image
 const deleteOldImage = (imagePath) => {
   if (!imagePath) return;
+  if (String(imagePath).startsWith('http://') || String(imagePath).startsWith('https://')) return;
   const fullPath = path.join(__dirname, '../public', imagePath);
   if (fs.existsSync(fullPath)) {
     fs.unlinkSync(fullPath);
+  }
+};
+
+const deleteUploadedFileIfLocal = (file) => {
+  if (!file || !file.path) return;
+  if (String(file.path).startsWith('http://') || String(file.path).startsWith('https://')) return;
+  if (fs.existsSync(file.path)) {
+    fs.unlinkSync(file.path);
   }
 };
 
@@ -87,9 +96,7 @@ exports.createProduct = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       // If there was a file upload, delete it since validation failed
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
+      deleteUploadedFileIfLocal(req.file);
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -104,7 +111,7 @@ exports.createProduct = async (req, res) => {
       original_price: parseFloat(req.body.original_price) || parseFloat(req.body.price),
       stock_quantity: parseInt(req.body.stock_quantity),
       is_featured: req.body.is_featured === 'true',
-      image_url: req.file ? `/uploads/products/${req.file.filename}` : null
+      image_url: req.file ? (req.file.path || `/uploads/products/${req.file.filename}`) : null
     };
 
     const product = await Product.create(productData);
@@ -116,9 +123,7 @@ exports.createProduct = async (req, res) => {
     });
   } catch (error) {
     // If there was an error and a file was uploaded, delete it
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
-    }
+    deleteUploadedFileIfLocal(req.file);
     console.error('Create product error:', error);
     res.status(500).json({ 
       success: false, 
@@ -134,9 +139,7 @@ exports.updateProduct = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       // If there was a file upload, delete it since validation failed
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
+      deleteUploadedFileIfLocal(req.file);
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -146,9 +149,7 @@ exports.updateProduct = async (req, res) => {
 
     const existingProduct = await Product.findById(req.params.id);
     if (!existingProduct) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
+      deleteUploadedFileIfLocal(req.file);
       return res.status(404).json({
         success: false,
         message: 'Product not found'
@@ -166,7 +167,7 @@ exports.updateProduct = async (req, res) => {
 
     // Handle image update
     if (req.file) {
-      productData.image_url = `/uploads/products/${req.file.filename}`;
+      productData.image_url = req.file.path || `/uploads/products/${req.file.filename}`;
       // Delete old image if it exists
       if (existingProduct.image_url) {
         deleteOldImage(existingProduct.image_url);
@@ -182,9 +183,7 @@ exports.updateProduct = async (req, res) => {
     });
   } catch (error) {
     // If there was an error and a file was uploaded, delete it
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
-    }
+    deleteUploadedFileIfLocal(req.file);
     console.error('Update product error:', error);
     res.status(500).json({ 
       success: false, 
