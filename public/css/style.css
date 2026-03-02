@@ -220,7 +220,8 @@ nav a:hover::after, nav a.active::after {
         gap: 1rem;
         padding: 0.5rem 3%;
         align-items: center;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        flex-wrap: nowrap;
     }
 
     nav ul {
@@ -244,14 +245,14 @@ nav a:hover::after, nav a.active::after {
 
     .mobile-toggle { display: block; }
 
-    .logo { flex: 1 1 auto; min-width: 0; }
-    .nav-icons { gap: 0.75rem; position: relative; z-index: 1301; flex-shrink: 0; }
+    .logo { flex: 0 1 auto; min-width: 0; }
+    .nav-icons { gap: 0.75rem; position: relative; z-index: 1301; flex-shrink: 0; margin-left: auto; align-items: center; }
 
     .dropdown-content { right: 10px; left: auto; }
 
     .logo a {
-        width: min(240px, 70vw);
-        height: 65px;
+        width: min(220px, 58vw);
+        height: 60px;
         overflow: hidden;
         position: relative;
         z-index: 1001;
