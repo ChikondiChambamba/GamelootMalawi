@@ -5,10 +5,11 @@ const path = require('path');
 require('dotenv').config();
 
 const SMTP_HOST = process.env.SMTP_HOST || env.SMTP_HOST;
-const SMTP_USER = process.env.SMTP_USER || process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS || process.env.SMTP_PASS;
+const SMTP_USER = process.env.SMTP_USER || env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS || env.SMTP_PASS;
 const SMTP_PORT = process.env.SMTP_PORT || 587;
 const SMTP_SECURE = process.env.SMTP_SECURE === 'true' || false;
+const isProd = process.env.NODE_ENV === 'production';
 
 let transporter = null;
 let useFallback = false;
@@ -21,14 +22,21 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS && SMTP_HOST !== 'smtp.example.com') {
     auth: { user: SMTP_USER, pass: SMTP_PASS }
   });
 
-  // verify transporter but don't throw on failure during startup
+  // Verify transporter but do not disable delivery in production based on startup timing/network blips.
   transporter.verify().catch(err => {
-    console.warn('SMTP verify failed, falling back to log-only mailer:', err && err.message);
-    transporter = null;
-    useFallback = true;
+    console.warn('SMTP verify failed:', err && err.message);
+    if (!isProd) {
+      transporter = null;
+      useFallback = true;
+      console.warn('Non-production mode: using log-only fallback mailer.');
+    }
   });
 } else {
-  useFallback = true;
+  if (isProd) {
+    console.error('SMTP is not fully configured in production. Emails will fail until SMTP_* variables are set.');
+  } else {
+    useFallback = true;
+  }
 }
 
 // Ensure tmp dir exists for local email logs
@@ -42,6 +50,9 @@ async function sendMail(to, subject, html, options = {}) {
   const attachments = Array.isArray(options.attachments) ? options.attachments : [];
 
   if (!transporter || useFallback) {
+    if (isProd) {
+      throw new Error('SMTP transporter unavailable in production. Check SMTP configuration.');
+    }
     const attachmentList = attachments.length
       ? `\nAttachments: ${attachments.map((a) => a.filename || 'file').join(', ')}\n`
       : '\n';
