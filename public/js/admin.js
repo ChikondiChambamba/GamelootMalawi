@@ -149,12 +149,28 @@
   function initAddProductSubmit() {
     const addProductForm = document.getElementById('addProductForm');
     if (!addProductForm) return;
+    const submitAddBtn = document.getElementById('submitAddProduct');
+
+    function notify(message, type = 'error') {
+      if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+      } else {
+        alert(message);
+      }
+    }
 
     addProductForm.addEventListener('submit', async function onAddProductSubmit(e) {
       e.preventDefault();
+      if (this.dataset.submitting === '1') return;
       if (!this.checkValidity()) {
         this.reportValidity();
         return;
+      }
+
+      this.dataset.submitting = '1';
+      if (submitAddBtn) {
+        submitAddBtn.disabled = true;
+        submitAddBtn.textContent = 'Adding...';
       }
 
       const formData = new FormData(this);
@@ -163,20 +179,29 @@
           method: 'POST',
           body: formData
         });
-        const result = await response.json();
+        const text = await response.text();
+        const result = safeJsonParse(text, { success: false, message: text || 'Could not add product.' });
         if (result.success) {
           closeModal('addProductModal');
           window.location.reload();
+        } else {
+          notify(result.message || 'Could not add product.');
         }
       } catch (err) {
-        // no-op
+        notify('Could not add product. Please try again.');
+      } finally {
+        this.dataset.submitting = '0';
+        if (submitAddBtn) {
+          submitAddBtn.disabled = false;
+          submitAddBtn.textContent = 'Add Product';
+        }
       }
     });
 
-    const submitAddBtn = document.getElementById('submitAddProduct');
     if (submitAddBtn) {
       submitAddBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        if (addProductForm.dataset.submitting === '1') return;
         if (typeof addProductForm.requestSubmit === 'function') addProductForm.requestSubmit();
         else addProductForm.dispatchEvent(new Event('submit', { cancelable: true }));
       });

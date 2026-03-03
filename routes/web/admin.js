@@ -39,11 +39,15 @@ const uploadWithErrorHandler = (req, res, next) => {
   uploader.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE' || err.code === 'FILE_TOO_LARGE') {
-        return res.status(400).json({ success: false, message: 'File is too large (max 2MB)' });
+        return res.status(400).json({ success: false, message: 'File is too large (max 5MB)' });
       }
+      console.error('Product upload multer error:', { code: err.code, message: err.message, cloudinary: hasCloudinaryEnv() });
       return res.status(400).json({ success: false, message: `File upload error: ${err.message}` });
     }
-    if (err) return res.status(400).json({ success: false, message: err.message });
+    if (err) {
+      console.error('Product upload error:', { message: err.message, cloudinary: hasCloudinaryEnv() });
+      return res.status(400).json({ success: false, message: err.message || 'Upload failed. Check Cloudinary configuration.' });
+    }
     return next();
   });
 };
