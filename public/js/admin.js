@@ -9,6 +9,18 @@
     opts.headers = { ...(options.headers || {}) };
     const token = getCsrfToken();
     if (token) opts.headers['X-CSRF-Token'] = token;
+
+    const isMultipartBody = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+    if (token && isMultipartBody) {
+      const hasAbsoluteUrl = /^https?:\/\//i.test(url);
+      const base = hasAbsoluteUrl ? undefined : window.location.origin;
+      const fullUrl = new URL(url, base);
+      if (!fullUrl.searchParams.has('_csrf')) {
+        fullUrl.searchParams.set('_csrf', token);
+      }
+      return fetch(fullUrl.toString(), opts);
+    }
+
     return fetch(url, opts);
   }
 
