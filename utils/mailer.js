@@ -8,7 +8,7 @@ const SMTP_HOST = process.env.SMTP_HOST || env.SMTP_HOST;
 const SMTP_USER = process.env.SMTP_USER || env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS || env.SMTP_PASS;
 const SMTP_PORT = process.env.SMTP_PORT || 587;
-const SMTP_SECURE = process.env.SMTP_SECURE === 'true' || false;
+const SMTP_SECURE = false;
 const isProd = process.env.NODE_ENV === 'production';
 
 let transporter = null;
@@ -46,7 +46,7 @@ if (!fs.existsSync(tmpDir)) {
 }
 
 async function sendMail(to, subject, html, options = {}) {
-  const from = process.env.SMTP_FROM || 'no-reply@gamelootmalawi.com';
+  const from = process.env.SMTP_FROM || 'no-reply@gamelootmalawi@gmail.com';
   const attachments = Array.isArray(options.attachments) ? options.attachments : [];
 
   if (!transporter || useFallback) {

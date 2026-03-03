@@ -37,7 +37,7 @@ if (isProd && !process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET must be set in production.');
 }
 
-if (isProd) app.set('trust proxy', 1);
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 app.use(helmet({
