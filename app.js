@@ -8,6 +8,7 @@ const helmet = require('helmet');
 require('dotenv').config();
 const logger = require('./utils/logger');
 const { ensureCsrfToken, verifyCsrf } = require('./middleware/csrf');
+const { getMailerStatus } = require('./utils/mailer');
 
 const Cart = require('./models/Cart');
 const {
@@ -101,6 +102,7 @@ app.get('/health', (req, res) => {
     service: 'gamelootmalawi',
     env: process.env.NODE_ENV || 'development',
     uploads_writable: uploadsWritable,
+    mailer: getMailerStatus(),
     uptime_sec: Math.round(process.uptime()),
     timestamp: new Date().toISOString()
   });
