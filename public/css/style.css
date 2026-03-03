@@ -572,6 +572,49 @@ nav a:hover::after, nav a.active::after {
 
 /* Arc Category Carousel (Home) */
 .category-arc-section {
+    position: relative;
+    padding: 5rem 5%;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0, 195, 255, 0.14), transparent 40%),
+        radial-gradient(circle at 80% 10%, rgba(42, 10, 94, 0.18), transparent 44%),
+        linear-gradient(180deg, #fbfbff 0%, #f0f2fb 100%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.category-arc-section {
+    position: relative;
+    height: 100vh;
+    padding: 5rem 5%;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0, 195, 255, 0.14), transparent 40%),
+        radial-gradient(circle at 80% 10%, rgba(42, 10, 94, 0.18), transparent 44%),
+        linear-gradient(180deg, #fbfbff 0%, #f0f2fb 100%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.category-arc-track {
+    --arc-card-width: 260px;
+    display: flex;
+    gap: 2.5rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    scroll-behavior: smooth;
+    padding: 5.2rem max(8vw, 70px) 4rem;
+    margin: 0 auto;
+    max-width: 1400px;
+    perspective: 1400px;
+    transform-style: preserve-3d;
+    width: 100%;
+    will-change: transform;
+}
+
+.category-arc-track::-webkit-scrollbar {
+    display: none;
+}
+.category-arc-section {
     padding: 5rem 5%;
     background:
         radial-gradient(circle at 20% 20%, rgba(0, 195, 255, 0.14), transparent 40%),
@@ -714,7 +757,7 @@ nav a:hover::after, nav a.active::after {
 }
 
 .category-arc-card:hover .category-arc-icon {
-    animation: iconPulse 0.7s ease;
+    animation: iconPulse 0.3s ease;
 }
 
 .category-arc-card:hover .category-arc-btn {
@@ -883,6 +926,78 @@ body.nav-open {
 
 .product-badge.hot {
     background: var(--warning);
+}
+
+.order-status-row td {
+    background: #f8f9ff;
+    border-top: none;
+}
+
+.order-status-card {
+    border: 1px solid rgba(42, 10, 94, 0.12);
+    border-radius: 14px;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f4f2ff 100%);
+}
+
+.order-status-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.order-status-card-head h5 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.order-status-meta {
+    margin: 0.5rem 0 0.8rem;
+    color: var(--gray);
+    font-size: 0.92rem;
+}
+
+.status-pill {
+    padding: 0.24rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-pending { background: #ebecef; color: #4f5660; }
+.status-confirmed { background: rgba(42, 10, 94, 0.12); color: var(--primary); }
+.status-shipped { background: rgba(0, 195, 255, 0.12); color: #006b8a; }
+.status-delivered { background: rgba(76, 175, 80, 0.15); color: #2f7f33; }
+.status-cancelled { background: rgba(244, 67, 54, 0.14); color: #a62b25; }
+
+.status-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.order-status-controls {
+    margin-top: 0.8rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.order-status-controls .status-select {
+    max-width: 220px;
+}
+
+@media (max-width: 900px) {
+    .order-status-controls {
+        flex-wrap: wrap;
+    }
+    .order-status-controls .status-select {
+        max-width: 100%;
+        width: 100%;
+    }
 }
 
 .product-img {

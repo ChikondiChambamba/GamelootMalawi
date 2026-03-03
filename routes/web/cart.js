@@ -8,6 +8,7 @@ const Order = require('../../models/order');
 const PaymentSettings = require('../../models/PaymentSettings');
 const mailer = require('../../utils/mailer');
 const { buildInvoicePdf } = require('../../utils/invoicePdf');
+const { toPublicFileUrl } = require('../../utils/filePathToUrl');
 
 const router = express.Router();
 
@@ -270,7 +271,7 @@ router.post('/orders', (req, res, next) => {
       return res.redirect('/checkout');
     }
 
-    const paymentReceiptUrl = req.file ? `/uploads/receipts/${req.file.filename}` : null;
+    const paymentReceiptUrl = req.file ? toPublicFileUrl(req.file.path) : null;
     const siteBaseUrl = process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
 
     const orderData = {

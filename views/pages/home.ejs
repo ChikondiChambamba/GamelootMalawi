@@ -46,7 +46,7 @@
     <div class="products-grid">
         <% if (featuredProducts.length > 0) { %>
             <% featuredProducts.forEach(product => { %>
-                <div class="product-card animate-on-scroll" data-product-id="<%= product.id %>">
+                <div class="product-card animate-on-scroll" data-product-id="<%= product.id %>" data-product-category="<%= product.category_name.toLowerCase() %>">
                     <% if (product.badge && product.badge !== 'none') { %>
                         <span class="product-badge <%= product.badge %>">
                             <%= product.badge.charAt(0).toUpperCase() + product.badge.slice(1) %>
@@ -94,12 +94,12 @@
         </div>
         
         <div class="filter-controls">
-            <button class="filter-btn active">All Products</button>
-            <button class="filter-btn">Consoles</button>
-            <button class="filter-btn">Games</button>
-            <button class="filter-btn">Accessories</button>
-            <button class="filter-btn">Electronics</button>
-            <button class="filter-btn">On Sale</button>
+            <button class="filter-btn active" data-filter="all">All Products</button>
+            <button class="filter-btn" data-filter="consoles">Consoles</button>
+            <button class="filter-btn" data-filter="games">Games</button>
+            <button class="filter-btn" data-filter="accessories">Accessories</button>
+            <button class="filter-btn" data-filter="electronics">Electronics</button>
+            <button class="filter-btn" data-filter="sale">On Sale</button>
         </div>
     </div>
     

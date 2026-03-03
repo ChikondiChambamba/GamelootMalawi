@@ -58,8 +58,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Open product details on double-clicking a product card
-    document.addEventListener('dblclick', function(e) {
+    // Open product details on clicking a product card
+    document.addEventListener('click', function(e) {
         const productCard = e.target.closest('.product-card[data-product-id]');
         if (!productCard) return;
 

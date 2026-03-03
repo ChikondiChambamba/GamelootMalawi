@@ -1,4 +1,5 @@
 <div class="container py-4" data-admin-order-detail="1" data-order-id="<%= order.id %>">
+  <% const isAdminUser = currentUser && currentUser.role === 'admin'; %>
   <div class="row mb-3">
     <div class="col-8">
       <h2>Order Details</h2>
@@ -7,15 +8,24 @@
       <p>Placed: <%= new Date(order.created_at).toLocaleString() %></p>
     </div>
     <div class="col-4 text-end">
-      <label for="status-select">Status</label>
-      <select id="status-select" class="form-select d-inline-block" style="width: auto;">
-        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>pending</option>
-        <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>confirmed</option>
-        <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>shipped</option>
-        <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>delivered</option>
-        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>cancelled</option>
-      </select>
-      <button id="save-status" class="btn btn-sm btn-primary ms-2">Save</button>
+      <% if (isAdminUser) { %>
+        <label for="status-select">Status</label>
+        <select id="status-select" class="form-select d-inline-block" style="width: auto;">
+          <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>pending</option>
+          <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>confirmed</option>
+          <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>shipped</option>
+          <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>delivered</option>
+          <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>cancelled</option>
+        </select>
+        <button id="save-status" class="btn btn-sm btn-primary ms-2">Save</button>
+      <% } else { %>
+        <label>Status</label>
+        <div>
+          <span class="badge <%= order.status === 'delivered' ? 'bg-success' : (order.status === 'cancelled' ? 'bg-danger' : 'bg-secondary') %>">
+            <%= order.status || 'pending' %>
+          </span>
+        </div>
+      <% } %>
     </div>
   </div>
 
@@ -54,6 +64,7 @@
         <div class="card-body">
           <h5>Summary</h5>
           <p>Subtotal: <strong>MK <%= Number(order.total_amount).toLocaleString() %></strong></p>
+          <p>Status: <strong><%= order.status || 'pending' %></strong></p>
           <p>Payment Method: <%= order.payment_method || 'N/A' %></p>
           <p>Customer Phone: <%= order.customer_phone %></p>
           <p>Shipping Address:</p>

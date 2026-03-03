@@ -7,6 +7,8 @@ const PaymentSettings = require('../../models/PaymentSettings');
 const { isAdmin } = require('../../middleware/auth2');
 const { getCachedCategories } = require('../../utils/categoryService');
 const { upload: cloudinaryUpload, hasCloudinaryEnv } = require('../../config/cloudinaryConfig');
+const { toPublicFileUrl } = require('../../utils/filePathToUrl');
+const { sendOrderStatusUpdateEmail } = require('../../utils/orderStatusEmail');
 
 const router = express.Router();
 
@@ -70,7 +72,7 @@ router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res)
       category_id: parseInt(req.body.category_id, 10) || null,
       badge: req.body.badge || null,
       sku: req.body.sku || null,
-      image_url: req.file ? (req.file.path || `/uploads/products/${req.file.filename}`) : null,
+      image_url: req.file ? toPublicFileUrl(req.file.path) : null,
       specifications,
       images: []
     };
@@ -124,7 +126,7 @@ router.put('/admin/products/:id', isAdmin, uploadWithErrorHandler, async (req, r
       specifications: specifications.length ? specifications : undefined
     };
 
-    if (req.file) productData.image_url = req.file.path || `/uploads/products/${req.file.filename}`;
+    if (req.file) productData.image_url = toPublicFileUrl(req.file.path);
 
     const updated = await Product.update(id, productData);
     return res.json({ success: true, message: 'Product updated', product: updated });
@@ -235,6 +237,11 @@ router.put('/admin/orders/:id/status', isAdmin, async (req, res) => {
     if (!existingOrder) return res.status(404).json({ success: false, message: 'Order not found' });
 
     const updated = await Order.updateStatus(orderId, status);
+    try {
+      await sendOrderStatusUpdateEmail(updated, existingOrder.status, status);
+    } catch (mailErr) {
+      console.error('Order status email send failed (admin route):', mailErr && mailErr.message ? mailErr.message : mailErr);
+    }
     return res.json({ success: true, message: 'Status updated', data: updated });
   } catch (error) {
     console.error('Error updating order status (admin):', error);

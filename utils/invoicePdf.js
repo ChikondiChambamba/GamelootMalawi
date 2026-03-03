@@ -35,6 +35,24 @@ async function buildInvoicePdf({ order, items, shippingAddress }) {
 
   doc.on('data', (chunk) => chunks.push(chunk));
 
+  const logoCandidates = [
+    path.join(process.cwd(), 'public', 'images', 'logo', 'GAMELOOT LOGO TP.png'),
+    path.join(process.cwd(), 'public', 'images', 'logo', 'GAMELOOT LOGO blue black.png'),
+    path.join(process.cwd(), 'public', 'images', 'logo', 'GAMELOOT LOGO.png')
+  ];
+  const logoPath = logoCandidates.find((p) => fs.existsSync(p));
+
+  if (logoPath) {
+    try {
+      const logoWidth = 170;
+      const x = (doc.page.width - logoWidth) / 2;
+      doc.image(logoPath, x, doc.y, { width: logoWidth });
+      doc.moveDown(2.6);
+    } catch (e) {
+      // continue without logo if image parsing fails
+    }
+  }
+
   doc.fontSize(21).text('GameLootMalawi - Invoice', { align: 'left' });
   doc.moveDown(0.5);
   doc.fontSize(10).fillColor('#666').text(`Order #: ${order.order_number || order.id}`);

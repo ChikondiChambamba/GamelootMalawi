@@ -238,6 +238,44 @@
     const ordersRoot = document.querySelector('[data-admin-orders]');
     if (!ordersRoot) return;
 
+    function closeAllStatusCards() {
+      ordersRoot.querySelectorAll('[data-status-row]').forEach((row) => row.classList.add('d-none'));
+    }
+
+    function openStatusCard(orderId) {
+      closeAllStatusCards();
+      const row = ordersRoot.querySelector(`[data-status-row="${orderId}"]`);
+      if (row) row.classList.remove('d-none');
+    }
+
+    async function saveStatus(orderId, nextStatus, triggerBtn) {
+      if (!orderId || !nextStatus) return;
+      const btn = triggerBtn || ordersRoot.querySelector(`.save-order-status[data-order-id="${orderId}"]`);
+      const originalText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+      }
+      try {
+        const response = await adminFetch(`/admin/orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: nextStatus })
+        });
+        const json = await response.json();
+        if (json.success) {
+          window.location.reload();
+        }
+      } catch (err) {
+        // no-op
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = originalText || 'Save Status';
+        }
+      }
+    }
+
     document.addEventListener('click', async (e) => {
       const viewBtn = e.target.closest('.view-order');
       if (viewBtn) {
@@ -248,25 +286,39 @@
       }
 
       const statusBtn = e.target.closest('.change-status');
-      if (!statusBtn) return;
-      e.preventDefault();
-
-      const id = statusBtn.getAttribute('data-order-id');
-      if (!id) return;
-      const newStatus = prompt('Enter new status (pending, confirmed, shipped, delivered, cancelled):');
-      if (!newStatus) return;
-
-      try {
-        const response = await adminFetch(`/admin/orders/${id}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus })
-        });
-        const json = await response.json();
-        if (json.success) window.location.reload();
-      } catch (err) {
-        // no-op
+      if (statusBtn) {
+        e.preventDefault();
+        const id = statusBtn.getAttribute('data-open-status-card');
+        if (id) openStatusCard(id);
+        return;
       }
+
+      const closeBtn = e.target.closest('.close-status-card');
+      if (closeBtn) {
+        e.preventDefault();
+        const id = closeBtn.getAttribute('data-order-id');
+        const row = ordersRoot.querySelector(`[data-status-row="${id}"]`);
+        if (row) row.classList.add('d-none');
+        return;
+      }
+
+      const quickBtn = e.target.closest('.quick-status');
+      if (quickBtn) {
+        e.preventDefault();
+        const id = quickBtn.getAttribute('data-order-id');
+        const status = quickBtn.getAttribute('data-status');
+        const select = ordersRoot.querySelector(`.status-select[data-order-id="${id}"]`);
+        if (select) select.value = status;
+        return;
+      }
+
+      const saveBtn = e.target.closest('.save-order-status');
+      if (!saveBtn) return;
+      e.preventDefault();
+      const id = saveBtn.getAttribute('data-order-id');
+      const select = ordersRoot.querySelector(`.status-select[data-order-id="${id}"]`);
+      const status = select ? select.value : '';
+      await saveStatus(id, status, saveBtn);
     });
   }
 

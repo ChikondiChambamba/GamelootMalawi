@@ -20,7 +20,7 @@
       <tbody>
         <% if (orders && orders.length > 0) { %>
           <% orders.forEach(order => { %>
-            <tr>
+            <tr class="order-row">
               <td><%= order.order_number || ('#' + order.id) %></td>
               <td><%= order.customer_name %> (<%= order.customer_email %>)</td>
               <td>MWK <%= (order.total_amount || 0).toLocaleString() %></td>
@@ -28,7 +28,38 @@
               <td><%= new Date(order.created_at).toLocaleString() %></td>
               <td>
                 <button class="btn btn-sm btn-primary view-order" data-order-id="<%= order.id %>">View</button>
-                <button class="btn btn-sm btn-secondary change-status" data-order-id="<%= order.id %>">Change Status</button>
+                <button class="btn btn-sm btn-secondary change-status" data-order-id="<%= order.id %>" data-open-status-card="<%= order.id %>">Manage Status</button>
+              </td>
+            </tr>
+            <tr class="order-status-row d-none" data-status-row="<%= order.id %>">
+              <td colspan="6">
+                <div class="order-status-card" data-status-card="<%= order.id %>">
+                  <div class="order-status-card-head">
+                    <h5>Update Order Status</h5>
+                    <span class="status-pill status-<%= order.status || 'pending' %>"><%= order.status || 'pending' %></span>
+                  </div>
+                  <p class="order-status-meta">Order <strong><%= order.order_number || ('#' + order.id) %></strong> for <strong><%= order.customer_name %></strong></p>
+
+                  <div class="status-quick-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm quick-status" data-order-id="<%= order.id %>" data-status="pending">Pending</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm quick-status" data-order-id="<%= order.id %>" data-status="confirmed">Confirmed</button>
+                    <button type="button" class="btn btn-outline-info btn-sm quick-status" data-order-id="<%= order.id %>" data-status="shipped">Shipped</button>
+                    <button type="button" class="btn btn-outline-success btn-sm quick-status" data-order-id="<%= order.id %>" data-status="delivered">Delivered</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm quick-status" data-order-id="<%= order.id %>" data-status="cancelled">Cancelled</button>
+                  </div>
+
+                  <div class="order-status-controls">
+                    <select class="form-select form-select-sm status-select" data-order-id="<%= order.id %>">
+                      <option value="pending" <%= (order.status || 'pending') === 'pending' ? 'selected' : '' %>>Pending</option>
+                      <option value="confirmed" <%= (order.status || 'pending') === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+                      <option value="shipped" <%= (order.status || 'pending') === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                      <option value="delivered" <%= (order.status || 'pending') === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                      <option value="cancelled" <%= (order.status || 'pending') === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-primary save-order-status" data-order-id="<%= order.id %>">Save Status</button>
+                    <button type="button" class="btn btn-sm btn-light close-status-card" data-order-id="<%= order.id %>">Close</button>
+                  </div>
+                </div>
               </td>
             </tr>
           <% }) %>

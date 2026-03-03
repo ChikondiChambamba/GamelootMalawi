@@ -1,5 +1,6 @@
 const Order = require('../models/order');
 const { validationResult } = require('express-validator');
+const { sendOrderStatusUpdateEmail } = require('../utils/orderStatusEmail');
 
 // Create new order
 exports.createOrder = async (req, res) => {
@@ -140,6 +141,11 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     const order = await Order.updateStatus(orderId, status);
+    try {
+      await sendOrderStatusUpdateEmail(order, existingOrder.status, status);
+    } catch (mailErr) {
+      console.error('Order status email send failed (api route):', mailErr && mailErr.message ? mailErr.message : mailErr);
+    }
 
     res.json({
       success: true,
