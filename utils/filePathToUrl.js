@@ -20,4 +20,15 @@ function toPublicFileUrl(filePath) {
   return normalized;
 }
 
-module.exports = { toPublicFileUrl };
+function getUploadedFileUrl(file) {
+  if (!file) return null;
+  const raw =
+    file.path ||
+    file.secure_url ||
+    file.url ||
+    file.location ||
+    null;
+  return toPublicFileUrl(raw);
+}
+
+module.exports = { toPublicFileUrl, getUploadedFileUrl };

@@ -2,7 +2,7 @@ const Product = require('../models/Product');
 const { validationResult } = require('express-validator');
 const fs = require('fs');
 const path = require('path');
-const { toPublicFileUrl } = require('../utils/filePathToUrl');
+const { getUploadedFileUrl } = require('../utils/filePathToUrl');
 
 // Helper function to delete old image
 const deleteOldImage = (imagePath) => {
@@ -112,7 +112,7 @@ exports.createProduct = async (req, res) => {
       original_price: parseFloat(req.body.original_price) || parseFloat(req.body.price),
       stock_quantity: parseInt(req.body.stock_quantity),
       is_featured: req.body.is_featured === 'true',
-      image_url: req.file ? toPublicFileUrl(req.file.path) : null
+      image_url: getUploadedFileUrl(req.file)
     };
 
     const product = await Product.create(productData);
@@ -168,7 +168,7 @@ exports.updateProduct = async (req, res) => {
 
     // Handle image update
     if (req.file) {
-      productData.image_url = toPublicFileUrl(req.file.path);
+      productData.image_url = getUploadedFileUrl(req.file);
       // Delete old image if it exists
       if (existingProduct.image_url) {
         deleteOldImage(existingProduct.image_url);
