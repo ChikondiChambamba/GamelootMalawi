@@ -31,12 +31,15 @@ function imageFileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter: imageFileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 const uploadWithErrorHandler = (req, res, next) => {
   const uploader = hasCloudinaryEnv() ? cloudinaryUpload : upload;
-  uploader.single('image')(req, res, (err) => {
+  uploader.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'images', maxCount: 3 }
+  ])(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE' || err.code === 'FILE_TOO_LARGE') {
         return res.status(400).json({ success: false, message: 'File is too large (max 5MB)' });
@@ -65,6 +68,14 @@ router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res)
       }
     }
 
+    const primaryFile = req.files && Array.isArray(req.files.image) ? req.files.image[0] : null;
+    const extraFiles = req.files && Array.isArray(req.files.images) ? req.files.images : [];
+    const imageUrl = getUploadedFileUrl(primaryFile) || getUploadedFileUrl(extraFiles[0]) || null;
+    const extraImageUrls = extraFiles
+      .map((file) => getUploadedFileUrl(file))
+      .filter(Boolean)
+      .slice(0, 3);
+
     const productData = {
       name: req.body.name,
       description: req.body.description,
@@ -76,9 +87,9 @@ router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res)
       category_id: parseInt(req.body.category_id, 10) || null,
       badge: req.body.badge || null,
       sku: req.body.sku || null,
-      image_url: getUploadedFileUrl(req.file),
+      image_url: imageUrl,
       specifications,
-      images: []
+      images: extraImageUrls
     };
 
     const product = await Product.create(productData);
@@ -92,6 +103,8 @@ router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res)
 router.put('/admin/products/:id', isAdmin, uploadWithErrorHandler, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) return res.status(404).json({ success: false, message: 'Product not found' });
 
     let specifications = [];
     if (req.body.specifications) {
@@ -130,7 +143,28 @@ router.put('/admin/products/:id', isAdmin, uploadWithErrorHandler, async (req, r
       specifications: specifications.length ? specifications : undefined
     };
 
-    if (req.file) productData.image_url = getUploadedFileUrl(req.file);
+    const primaryFile = req.files && Array.isArray(req.files.image) ? req.files.image[0] : null;
+    const extraFiles = req.files && Array.isArray(req.files.images) ? req.files.images : [];
+
+    if (primaryFile) {
+      productData.image_url = getUploadedFileUrl(primaryFile);
+    }
+
+    if (extraFiles.length > 0) {
+      productData.images = extraFiles
+        .map((file) => getUploadedFileUrl(file))
+        .filter(Boolean)
+        .slice(0, 3);
+    } else if (existingProduct.images) {
+      // Preserve existing gallery images if no new extras were uploaded.
+      try {
+        productData.images = Array.isArray(existingProduct.images)
+          ? existingProduct.images
+          : JSON.parse(existingProduct.images);
+      } catch (e) {
+        productData.images = [];
+      }
+    }
 
     const updated = await Product.update(id, productData);
     return res.json({ success: true, message: 'Product updated', product: updated });

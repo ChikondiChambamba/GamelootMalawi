@@ -140,6 +140,25 @@ router.get('/product/:id', async (req, res) => {
       return res.redirect('/shop');
     }
 
+    const gallery = [];
+    if (product.image_url) gallery.push(product.image_url);
+    if (product.images) {
+      let extras = product.images;
+      if (typeof extras === 'string') {
+        try {
+          extras = JSON.parse(extras);
+        } catch (e) {
+          extras = [];
+        }
+      }
+      if (Array.isArray(extras)) {
+        extras.forEach((url) => {
+          if (url && !gallery.includes(url)) gallery.push(url);
+        });
+      }
+    }
+    product.gallery_images = gallery.slice(0, 4);
+
     let relatedProducts = [];
     try {
       relatedProducts = await Product.findByCategory(product.category_slug, { page: 1, limit: 4 });

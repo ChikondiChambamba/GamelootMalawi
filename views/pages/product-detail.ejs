@@ -8,7 +8,37 @@
     <div class="detail-container">
         <div class="detail-content">
             <div class="detail-img">
-                <img src="<%= product.image_url %>" alt="<%= product.name %>">
+                <%
+                    const gallery = (product.gallery_images && product.gallery_images.length)
+                        ? product.gallery_images
+                        : [product.image_url];
+                %>
+                <div class="detail-carousel" data-detail-carousel="1">
+                    <% if (gallery.length > 1) { %>
+                        <button class="detail-carousel-nav prev" type="button" aria-label="Previous image">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    <% } %>
+                    <div class="detail-carousel-stage">
+                        <div class="detail-carousel-track">
+                            <% gallery.forEach((image, idx) => { %>
+                                <div class="detail-carousel-item" data-index="<%= idx %>">
+                                    <img src="<%= image %>" alt="<%= product.name %> image <%= idx + 1 %>">
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <% if (gallery.length > 1) { %>
+                        <button class="detail-carousel-nav next" type="button" aria-label="Next image">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <div class="detail-carousel-dots">
+                            <% gallery.forEach((_, idx) => { %>
+                                <button type="button" class="detail-carousel-dot" data-index="<%= idx %>" aria-label="Go to image <%= idx + 1 %>"></button>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
             </div>
             
             <div class="detail-info">

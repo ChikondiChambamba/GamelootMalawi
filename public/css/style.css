@@ -1296,13 +1296,95 @@ body.nav-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
+    padding: 2.2rem 1.2rem;
+    overflow: hidden;
+    perspective: 1200px;
 }
 
-.detail-img img {
-    max-width: 100%;
-    max-height: 400px;
+.detail-carousel {
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.detail-carousel-stage {
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+.detail-carousel-track {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.detail-carousel-item {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 76%;
+    height: 82%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12);
+    transform: translate(-50%, -50%);
+    transition: transform 0.55s ease, opacity 0.55s ease, box-shadow 0.55s ease;
+    will-change: transform, opacity;
+}
+
+.detail-carousel-item img {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
+    background: #f7f8fc;
+}
+
+.detail-carousel-item.is-center {
+    box-shadow: 0 24px 52px rgba(42, 10, 94, 0.25);
+}
+
+.detail-carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--primary);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    z-index: 12;
+}
+
+.detail-carousel-nav.prev { left: 8px; }
+.detail-carousel-nav.next { right: 8px; }
+
+.detail-carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+}
+
+.detail-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    border: none;
+    background: #d1d5df;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.detail-carousel-dot.active {
+    background: var(--primary);
+    transform: scale(1.35);
 }
 
 .detail-info {
@@ -2139,6 +2221,10 @@ footer {
     
     .detail-img, .detail-info {
         min-width: 100%;
+    }
+
+    .detail-carousel-stage {
+        height: 340px;
     }
     
     .form-row {

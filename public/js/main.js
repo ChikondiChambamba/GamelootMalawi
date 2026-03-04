@@ -445,6 +445,8 @@ function initSubmitLoadingStates() {
 }
 
 function initProductDetailPage() {
+    initProductImageCarousel();
+
     const decreaseBtn = document.getElementById('decrease-qty');
     const increaseBtn = document.getElementById('increase-qty');
     const quantityInput = document.getElementById('product-qty');
@@ -467,6 +469,85 @@ function initProductDetailPage() {
         const quantity = Math.max(1, parseInt(quantityInput.value, 10) || 1);
         addToCart(productId, quantity);
     });
+}
+
+function initProductImageCarousel() {
+    const root = document.querySelector('[data-detail-carousel="1"]');
+    if (!root) return;
+
+    const track = root.querySelector('.detail-carousel-track');
+    const items = Array.from(root.querySelectorAll('.detail-carousel-item'));
+    const dots = Array.from(root.querySelectorAll('.detail-carousel-dot'));
+    const prevBtn = root.querySelector('.detail-carousel-nav.prev');
+    const nextBtn = root.querySelector('.detail-carousel-nav.next');
+    if (!track || items.length <= 1) return;
+
+    let active = 0;
+    let touchStartX = null;
+
+    function relativeOffset(index, current, length) {
+        let delta = index - current;
+        if (delta > length / 2) delta -= length;
+        if (delta < -length / 2) delta += length;
+        return delta;
+    }
+
+    function render() {
+        const maxVisible = 2;
+        items.forEach((item, idx) => {
+            const rel = relativeOffset(idx, active, items.length);
+            const abs = Math.abs(rel);
+            const hidden = abs > maxVisible;
+            const scale = rel === 0 ? 1 : (abs === 1 ? 0.8 : 0.64);
+            const translateX = rel * 38;
+            const rotateY = rel * -20;
+            const translateZ = rel === 0 ? 88 : (abs === 1 ? 12 : -68);
+            const opacity = hidden ? 0 : (rel === 0 ? 1 : (abs === 1 ? 0.78 : 0.46));
+
+            item.classList.toggle('is-center', rel === 0);
+            item.style.opacity = String(opacity);
+            item.style.zIndex = String(100 - abs);
+            item.style.pointerEvents = rel === 0 ? 'auto' : 'none';
+            item.style.transform =
+                `translate(-50%, -50%) translateX(${translateX}%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        });
+
+        dots.forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === active);
+        });
+    }
+
+    function goTo(index) {
+        const length = items.length;
+        active = ((index % length) + length) % length;
+        render();
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', () => goTo(active - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => goTo(active + 1));
+
+    dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+            const idx = parseInt(dot.getAttribute('data-index'), 10);
+            if (!Number.isNaN(idx)) goTo(idx);
+        });
+    });
+
+    track.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches && e.touches[0] ? e.touches[0].clientX : null;
+    }, { passive: true });
+
+    track.addEventListener('touchend', (e) => {
+        if (touchStartX === null) return;
+        const endX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : touchStartX;
+        const dx = endX - touchStartX;
+        touchStartX = null;
+        if (Math.abs(dx) < 30) return;
+        if (dx > 0) goTo(active - 1);
+        else goTo(active + 1);
+    }, { passive: true });
+
+    render();
 }
 
 function initCheckoutPage() {
