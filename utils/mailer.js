@@ -19,6 +19,7 @@ const SMTP_USER = clean(process.env.SMTP_USER || env.SMTP_USER);
 let SMTP_PASS = clean(process.env.SMTP_PASS || env.SMTP_PASS);
 const SMTP_PORT = parseInt(clean(process.env.SMTP_PORT || 587), 10) || 587;
 const SMTP_SECURE = parseBool(process.env.SMTP_SECURE, SMTP_PORT === 465);
+const SMTP_DEBUG = parseBool(process.env.SMTP_DEBUG, false);
 const isProd = process.env.NODE_ENV === 'production';
 const SMTP_FROM = clean(process.env.SMTP_FROM || SMTP_USER || 'no-reply@gamelootmalawi@gmail.com');
 
@@ -37,7 +38,9 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS && SMTP_HOST !== 'smtp.example.com') {
     host: SMTP_HOST,
     port: SMTP_PORT,
     secure: SMTP_SECURE,
-    auth: { user: SMTP_USER, pass: SMTP_PASS }
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+    debug: SMTP_DEBUG,
+    logger: SMTP_DEBUG
   });
 
   // Verify transporter but do not disable delivery in production based on startup timing/network blips.
@@ -106,6 +109,7 @@ function getMailerStatus() {
     host: SMTP_HOST || null,
     port: SMTP_PORT,
     secure: SMTP_SECURE,
+    debug: SMTP_DEBUG,
     from: SMTP_FROM || null,
     lastVerifyError,
     lastSendError,
