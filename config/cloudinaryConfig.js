@@ -60,12 +60,20 @@ function resolveCloudinaryConfig() {
 function hasCloudinaryEnv() {
   const cfg = resolveCloudinaryConfig();
   const hasCreds = Boolean(cfg.cloud_name && cfg.api_key && cfg.api_secret);
-  if (!hasCreds) return false;
+  const isProdLike = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+  const devExplicitEnable = parseBool(process.env.CLOUDINARY_ENABLED, false);
 
-  const isProd = process.env.NODE_ENV === 'production';
+  // Production-like environments must use Cloudinary when credentials are present.
+  if (isProdLike) {
+    if (!hasCreds) {
+      console.warn('[cloudinary] Production-like runtime detected but Cloudinary credentials are missing. Falling back to local uploads.');
+      return false;
+    }
+    return true;
+  }
+
   // In development, default to local disk uploads unless explicitly enabled.
-  if (!isProd) return parseBool(process.env.CLOUDINARY_ENABLED, false);
-  return true;
+  return hasCreds && devExplicitEnable;
 }
 
 const cloudCfg = resolveCloudinaryConfig();
