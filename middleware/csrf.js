@@ -24,7 +24,11 @@ function verifyCsrf(req, res, next) {
   const contentType = String(req.get('content-type') || '').toLowerCase();
   if (contentType.includes('multipart/form-data')) {
     // Allow route-level verification for checkout where token is posted in multipart body.
-    if (req.path === '/orders') return next();
+    if (
+      req.path === '/orders' ||
+      req.path === '/admin/products' ||
+      /^\/admin\/products\/[^/]+$/.test(req.path)
+    ) return next();
     const expected = req.session && req.session.csrfToken;
     const provided = req.get('x-csrf-token') || (req.query && req.query._csrf);
     if (expected && provided && provided === expected) return next();

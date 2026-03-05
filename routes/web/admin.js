@@ -34,6 +34,20 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+const verifyMultipartCsrf = (req, res, next) => {
+  const expected = String((req.session && req.session.csrfToken) || '');
+  const provided = String(
+    req.get('x-csrf-token') ||
+    (req.query && req.query._csrf) ||
+    (req.body && req.body._csrf) ||
+    ''
+  );
+  if (!expected || !provided || expected !== provided) {
+    return res.status(403).json({ success: false, message: 'Invalid CSRF token.' });
+  }
+  return next();
+};
+
 const uploadWithErrorHandler = (req, res, next) => {
   const uploader = hasCloudinaryEnv() ? cloudinaryUpload : upload;
   uploader.fields([
@@ -55,7 +69,7 @@ const uploadWithErrorHandler = (req, res, next) => {
   });
 };
 
-router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res) => {
+router.post('/admin/products', isAdmin, verifyMultipartCsrf, uploadWithErrorHandler, async (req, res) => {
   try {
     let specifications = [];
     if (req.body.specifications) {
@@ -100,7 +114,7 @@ router.post('/admin/products', isAdmin, uploadWithErrorHandler, async (req, res)
   }
 });
 
-router.put('/admin/products/:id', isAdmin, uploadWithErrorHandler, async (req, res) => {
+router.put('/admin/products/:id', isAdmin, verifyMultipartCsrf, uploadWithErrorHandler, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const existingProduct = await Product.findById(id);
