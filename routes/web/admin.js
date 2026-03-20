@@ -4,6 +4,7 @@ const db = require('../../config/database');
 const Product = require('../../models/Product');
 const Order = require('../../models/order');
 const PaymentSettings = require('../../models/PaymentSettings');
+const PriceCalculatorSettings = require('../../models/PriceCalculatorSettings');
 const { isAdmin } = require('../../middleware/auth2');
 const { getCachedCategories } = require('../../utils/categoryService');
 const { upload: cloudinaryUpload, hasCloudinaryEnv } = require('../../config/cloudinaryConfig');
@@ -305,6 +306,7 @@ router.get('/admin', isAdmin, async (req, res) => {
   try {
     let productsList = [];
     let categoriesList = [];
+    let calculatorSettings = null;
 
     try {
       const products = await Product.findAll({ page: 1, limit: 100 });
@@ -319,11 +321,21 @@ router.get('/admin', isAdmin, async (req, res) => {
       console.error('Error loading categories:', err);
     }
 
+    try {
+      calculatorSettings = await PriceCalculatorSettings.get();
+    } catch (err) {
+      console.error('Error loading calculator settings:', err);
+      calculatorSettings = PriceCalculatorSettings.defaults;
+    }
+
     return res.render('layout', {
       title: 'Admin Dashboard - GameLootMalawi',
       content: 'pages/admin-dashboard',
       products: productsList,
       categories: categoriesList,
+      calculatorSettings,
+      activeAdminTab: req.query.tab || 'products',
+      calculatorSettingsSaved: req.query.calcSaved === '1',
       success: req.flash('success'),
       error: req.flash('error'),
       currentUser: req.session.user
@@ -332,6 +344,18 @@ router.get('/admin', isAdmin, async (req, res) => {
     console.error('Admin dashboard error:', error);
     req.flash('error', 'Error loading admin dashboard');
     return res.redirect('/');
+  }
+});
+
+router.post('/admin/price-calculator-settings', isAdmin, async (req, res) => {
+  try {
+    await PriceCalculatorSettings.update(req.body);
+    req.flash('success', 'Price calculator defaults updated');
+    return res.redirect('/admin?tab=calculator&calcSaved=1');
+  } catch (error) {
+    console.error('Update calculator settings error:', error);
+    req.flash('error', 'Could not update price calculator defaults');
+    return res.redirect('/admin?tab=calculator');
   }
 });
 

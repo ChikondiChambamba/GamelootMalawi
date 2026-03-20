@@ -10,17 +10,17 @@
     <!-- Navigation Tabs -->
     <ul class="nav nav-tabs mb-4" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#productsContent" type="button">
+            <button class="nav-link <%= (!activeAdminTab || activeAdminTab === 'products') ? 'active' : '' %>" id="products-tab" data-bs-toggle="tab" data-bs-target="#productsContent" type="button">
                 <i class="fas fa-box"></i> Products
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categoriesContent" type="button">
+            <button class="nav-link <%= activeAdminTab === 'categories' ? 'active' : '' %>" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categoriesContent" type="button">
                 <i class="fas fa-folder"></i> Categories
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="calculator-tab" data-bs-toggle="tab" data-bs-target="#calculatorContent" type="button">
+            <button class="nav-link <%= activeAdminTab === 'calculator' ? 'active' : '' %>" id="calculator-tab" data-bs-toggle="tab" data-bs-target="#calculatorContent" type="button">
                 <i class="fas fa-calculator"></i> Price Calculator
             </button>
         </li>
@@ -29,17 +29,17 @@
     <!-- Tab Content -->
     <div class="tab-content">
         <!-- Products Tab -->
-        <div class="tab-pane fade show active" id="productsContent" role="tabpanel">
+        <div class="tab-pane fade <%= (!activeAdminTab || activeAdminTab === 'products') ? 'show active' : '' %>" id="productsContent" role="tabpanel">
             <%- include('admin-products') %>
         </div>
 
         <!-- Categories Tab -->
-        <div class="tab-pane fade" id="categoriesContent" role="tabpanel">
+        <div class="tab-pane fade <%= activeAdminTab === 'categories' ? 'show active' : '' %>" id="categoriesContent" role="tabpanel">
             <%- include('admin-categories') %>
         </div>
 
         <!-- Price Calculator Tab -->
-        <div class="tab-pane fade" id="calculatorContent" role="tabpanel">
+        <div class="tab-pane fade <%= activeAdminTab === 'calculator' ? 'show active' : '' %>" id="calculatorContent" role="tabpanel">
             <div id="priceCalculatorSection">
                 <%- include('admin-price-calculator') %>
             </div>

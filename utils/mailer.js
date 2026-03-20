@@ -21,7 +21,7 @@ const SMTP_PORT = parseInt(clean(process.env.SMTP_PORT || 587), 10) || 587;
 const SMTP_SECURE = parseBool(process.env.SMTP_SECURE, SMTP_PORT === 465);
 const SMTP_DEBUG = parseBool(process.env.SMTP_DEBUG, false);
 const isProd = process.env.NODE_ENV === 'production';
-const SMTP_FROM = clean(process.env.SMTP_FROM || SMTP_USER || 'no-reply@gamelootmalawi.com');
+const SMTP_FROM = clean(process.env.SMTP_FROM || SMTP_USER || 'no-reply@gamelootmalawi@gmail.com');
 
 if (SMTP_HOST === 'smtp.gmail.com' && /\s/.test(SMTP_PASS)) {
   SMTP_PASS = SMTP_PASS.replace(/\s+/g, '');

@@ -1,16 +1,54 @@
 <!-- Price Calculator for Admins -->
+<% const calcDefaults = calculatorSettings || { price_per_weight_kg: 52500, fixed_tax: 36000 }; %>
 <div class="price-calculator-section">
     <div class="calculator-container">
         <h2>Product Price Calculator</h2>
-        <p class="calculator-description">Calculate the final selling price based on original price, profit margin, forex rate, and transport costs.</p>
-        
+        <p class="calculator-description">Calculate the final selling price using product cost, exchange rate, weight pricing, fixed tax, transport costs, and profit margin.</p>
+
+        <div class="calculator-settings-panel">
+            <div>
+                <h3>Default Charges</h3>
+                <p class="calculator-settings-note">These defaults can be changed and saved for future calculations.</p>
+            </div>
+            <form method="POST" action="/admin/price-calculator-settings" class="calculator-settings-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="form-group">
+                    <label for="defaultPricePerWeight">Price / Weight (kg)</label>
+                    <input
+                        type="number"
+                        id="defaultPricePerWeight"
+                        name="price_per_weight_kg"
+                        step="0.01"
+                        min="0"
+                        class="form-control calculator-input"
+                        value="<%= Number(calcDefaults.price_per_weight_kg || 52500) %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="defaultFixedTax">Fixed Tax</label>
+                    <input
+                        type="number"
+                        id="defaultFixedTax"
+                        name="fixed_tax"
+                        step="0.01"
+                        min="0"
+                        class="form-control calculator-input"
+                        value="<%= Number(calcDefaults.fixed_tax || 36000) %>">
+                </div>
+
+                <div class="calculator-settings-actions">
+                    <button type="submit" class="btn btn-primary">Save Defaults</button>
+                </div>
+            </form>
+        </div>
+
         <div class="calculator-form">
             <div class="form-group">
                 <label for="origPrice">Original Price (Product Cost)</label>
-                <input 
-                    type="number" 
-                    id="origPrice" 
-                    placeholder="e.g., 50000" 
+                <input
+                    type="number"
+                    id="origPrice"
+                    placeholder="e.g., 50000"
                     step="0.01"
                     min="0"
                     class="form-control calculator-input">
@@ -19,10 +57,10 @@
 
             <div class="form-group">
                 <label for="forexRate">Forex Rate (Exchange Rate)</label>
-                <input 
-                    type="number" 
-                    id="forexRate" 
-                    placeholder="e.g., 1.05" 
+                <input
+                    type="number"
+                    id="forexRate"
+                    placeholder="e.g., 1.05"
                     step="0.01"
                     min="0"
                     class="form-control calculator-input"
@@ -31,27 +69,66 @@
             </div>
 
             <div class="form-group">
+                <label for="weightKg">Weight (kg)</label>
+                <input
+                    type="number"
+                    id="weightKg"
+                    placeholder="e.g., 1.5"
+                    step="0.01"
+                    min="0"
+                    class="form-control calculator-input"
+                    value="0">
+                <small>Enter the product shipping weight in kilograms</small>
+            </div>
+
+            <div class="form-group">
+                <label for="pricePerWeight">Price / Weight (kg)</label>
+                <input
+                    type="number"
+                    id="pricePerWeight"
+                    placeholder="e.g., 52500"
+                    step="0.01"
+                    min="0"
+                    class="form-control calculator-input"
+                    value="<%= Number(calcDefaults.price_per_weight_kg || 52500) %>">
+                <small>Default weight charge per kilogram</small>
+            </div>
+
+            <div class="form-group">
+                <label for="fixedTax">Fixed Tax</label>
+                <input
+                    type="number"
+                    id="fixedTax"
+                    placeholder="e.g., 36000"
+                    step="0.01"
+                    min="0"
+                    class="form-control calculator-input"
+                    value="<%= Number(calcDefaults.fixed_tax || 36000) %>">
+                <small>Default tax amount applied to every calculation</small>
+            </div>
+
+            <div class="form-group">
                 <label for="transportCost">Transport & Shipping Cost (Fixed)</label>
-                <input 
-                    type="number" 
-                    id="transportCost" 
-                    placeholder="e.g., 5000" 
+                <input
+                    type="number"
+                    id="transportCost"
+                    placeholder="e.g., 5000"
                     step="0.01"
                     min="0"
                     class="form-control calculator-input">
-                <small>Fixed cost per unit for transport and handling</small>
+                <small>Additional transport and handling cost for this product</small>
             </div>
 
             <div class="form-group">
                 <label for="profitPercent">Profit Margin (%)</label>
-                <input 
-                    type="number" 
-                    id="profitPercent" 
-                    placeholder="e.g., 25" 
+                <input
+                    type="number"
+                    id="profitPercent"
+                    placeholder="e.g., 25"
                     step="0.1"
                     min="0"
                     class="form-control calculator-input">
-                <small>Desired profit as percentage of base cost (e.g., 25%)</small>
+                <small>Desired profit as a percentage of subtotal</small>
             </div>
         </div>
 
@@ -64,6 +141,14 @@
                 <div class="result-row">
                     <span class="result-label">Forex Adjusted:</span>
                     <span class="result-value" id="resultForexPrice">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Weight Charge:</span>
+                    <span class="result-value" id="resultWeightCharge">0.00</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Fixed Tax:</span>
+                    <span class="result-value" id="resultFixedTax">0.00</span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Transport Cost:</span>
@@ -91,7 +176,7 @@
 
         <div class="calculator-formula">
             <h4>Formula Used:</h4>
-            <code>Final Price = (Original Price × Forex Rate + Transport Cost) × (1 + Profit % / 100)</code>
+            <code>Final Price = (Original Price x Forex Rate + (Weight x Price / Weight) + Fixed Tax + Transport Cost) x (1 + Profit % / 100)</code>
         </div>
     </div>
 </div>
@@ -106,7 +191,7 @@
 }
 
 .calculator-container {
-    max-width: 600px;
+    max-width: 720px;
     margin: 0 auto;
     background: white;
     padding: 2rem;
@@ -124,6 +209,40 @@
     color: #666;
     font-size: 0.9rem;
     margin-bottom: 1.5rem;
+}
+
+.calculator-settings-panel {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(46, 14, 84, 0.08), rgba(255, 122, 0, 0.08));
+    border: 1px solid rgba(46, 14, 84, 0.12);
+    border-radius: 12px;
+}
+
+.calculator-settings-panel h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #2e0e54;
+}
+
+.calculator-settings-note {
+    margin: 0.35rem 0 0;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.calculator-settings-form {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+}
+
+.calculator-settings-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .calculator-form {
@@ -180,6 +299,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     padding: 0.75rem 0;
     border-bottom: 1px solid #eee;
 }
@@ -197,6 +317,7 @@
     color: #333;
     font-weight: 600;
     font-size: 1.05rem;
+    text-align: right;
 }
 
 .profit-row {
@@ -214,10 +335,7 @@
     border-radius: 6px;
 }
 
-.final-row .result-label {
-    color: white;
-}
-
+.final-row .result-label,
 .final-row .result-value {
     color: white;
 }
@@ -235,34 +353,38 @@
     margin-top: 2rem;
 }
 
-.calculator-actions .btn {
-    flex: 1;
+.calculator-actions .btn,
+.calculator-settings-actions .btn {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+}
+
+.calculator-actions .btn {
+    flex: 1;
     min-width: 120px;
 }
 
-.calculator-actions .btn-primary {
+.btn.btn-primary {
     background: #007bff;
     color: white;
 }
 
-.calculator-actions .btn-primary:hover {
+.btn.btn-primary:hover {
     background: #0056b3;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
-.calculator-actions .btn-secondary {
+.btn.btn-secondary {
     background: #6c757d;
     color: white;
 }
 
-.calculator-actions .btn-secondary:hover {
+.btn.btn-secondary:hover {
     background: #545b62;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -299,12 +421,26 @@
         padding: 1rem;
     }
 
+    .calculator-settings-form {
+        grid-template-columns: 1fr;
+    }
+
     .calculator-actions {
         flex-direction: column;
     }
 
-    .calculator-actions .btn {
+    .calculator-actions .btn,
+    .calculator-settings-actions .btn {
         width: 100%;
+    }
+
+    .result-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .result-value {
+        text-align: left;
     }
 }
 </style>
