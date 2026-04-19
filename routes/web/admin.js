@@ -10,6 +10,8 @@ const { getCachedCategories } = require('../../utils/categoryService');
 const { upload: cloudinaryUpload, hasCloudinaryEnv } = require('../../config/cloudinaryConfig');
 const { getUploadedFileUrl } = require('../../utils/filePathToUrl');
 const { sendOrderStatusUpdateEmail } = require('../../utils/orderStatusEmail');
+const { buildSalesReportPdf } = require('../../utils/salesReportPdf');
+const { buildSalesReportExcel } = require('../../utils/salesReportExcel');
 
 const router = express.Router();
 
@@ -34,6 +36,30 @@ const upload = multer({
   fileFilter: imageFileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }
 });
+
+function sanitizeDate(value) {
+  const raw = String(value || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+}
+
+function getSalesReportFilters(req) {
+  const status = String(req.query.status || 'active').trim().toLowerCase();
+  const allowedStatus = new Set(['active', 'all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled']);
+  return {
+    status: allowedStatus.has(status) ? status : 'active',
+    dateFrom: sanitizeDate(req.query.dateFrom),
+    dateTo: sanitizeDate(req.query.dateTo)
+  };
+}
+
+function buildExportQuery(filters) {
+  const params = new URLSearchParams();
+  if (filters.status) params.set('status', filters.status);
+  if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+  if (filters.dateTo) params.set('dateTo', filters.dateTo);
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
 
 const verifyMultipartCsrf = (req, res, next) => {
   const expected = String((req.session && req.session.csrfToken) || '');
@@ -276,6 +302,71 @@ router.get('/admin/orders', isAdmin, async (req, res) => {
     console.error('Admin orders page error:', error);
     req.flash('error', 'Error loading orders');
     return res.redirect('/');
+  }
+});
+
+router.get('/admin/sales-report', isAdmin, async (req, res) => {
+  try {
+    const filters = getSalesReportFilters(req);
+    const report = await Order.findSalesReport(filters);
+
+    return res.render('layout', {
+      title: 'Sales Report - Admin',
+      content: 'pages/admin-sales-report',
+      reportRecords: report.records,
+      reportSummary: report.summary,
+      reportFilters: filters,
+      exportQuery: buildExportQuery(filters),
+      success: req.flash('success'),
+      error: req.flash('error'),
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Admin sales report page error:', error);
+    req.flash('error', 'Could not load sales report');
+    return res.redirect('/admin/orders');
+  }
+});
+
+router.get('/admin/sales-report.pdf', isAdmin, async (req, res) => {
+  try {
+    const filters = getSalesReportFilters(req);
+    const report = await Order.findSalesReport(filters);
+    const pdf = await buildSalesReportPdf({
+      records: report.records,
+      summary: report.summary,
+      filters
+    });
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="gameloot-sales-report-${stamp}.pdf"`);
+    return res.send(pdf);
+  } catch (error) {
+    console.error('Sales report PDF export error:', error);
+    req.flash('error', 'Could not export sales report PDF');
+    return res.redirect(`/admin/sales-report${buildExportQuery(getSalesReportFilters(req))}`);
+  }
+});
+
+router.get('/admin/sales-report.xls', isAdmin, async (req, res) => {
+  try {
+    const filters = getSalesReportFilters(req);
+    const report = await Order.findSalesReport(filters);
+    const workbook = buildSalesReportExcel({
+      records: report.records,
+      summary: report.summary,
+      filters
+    });
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="gameloot-sales-report-${stamp}.xls"`);
+    return res.send(workbook);
+  } catch (error) {
+    console.error('Sales report Excel export error:', error);
+    req.flash('error', 'Could not export sales report Excel file');
+    return res.redirect(`/admin/sales-report${buildExportQuery(getSalesReportFilters(req))}`);
   }
 });
 

@@ -174,6 +174,79 @@ class Order {
     const [orders] = await db.execute(query, params);
     return orders;
   }
+
+  static async findSalesReport({ status = 'active', dateFrom = '', dateTo = '' } = {}) {
+    let query = `
+      SELECT
+        o.id AS order_id,
+        o.order_number,
+        o.status,
+        o.created_at,
+        o.payment_method,
+        oi.product_id,
+        COALESCE(p.name, 'Product removed') AS product_name,
+        oi.quantity,
+        oi.unit_price,
+        oi.total_price,
+        COALESCE(NULLIF(o.customer_name, ''), NULLIF(u.name, ''), 'Guest Customer') AS buyer_name,
+        COALESCE(NULLIF(o.customer_email, ''), NULLIF(u.email, ''), '') AS buyer_email,
+        COALESCE(NULLIF(o.customer_phone, ''), NULLIF(u.phone, ''), '') AS buyer_phone
+      FROM orders o
+      INNER JOIN order_items oi ON oi.order_id = o.id
+      LEFT JOIN products p ON p.id = oi.product_id
+      LEFT JOIN users u ON u.id = o.user_id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (status === 'active') {
+      query += ' AND o.status <> ?';
+      params.push('cancelled');
+    } else if (status && status !== 'all') {
+      query += ' AND o.status = ?';
+      params.push(status);
+    }
+
+    if (dateFrom) {
+      query += ' AND DATE(o.created_at) >= ?';
+      params.push(dateFrom);
+    }
+
+    if (dateTo) {
+      query += ' AND DATE(o.created_at) <= ?';
+      params.push(dateTo);
+    }
+
+    query += ' ORDER BY o.created_at DESC, o.id DESC, oi.id DESC';
+
+    const [rows] = await db.execute(query, params);
+    const records = Array.isArray(rows) ? rows : [];
+    const orderIds = new Set();
+    const customerKeys = new Set();
+
+    const summary = records.reduce((acc, record) => {
+      const quantity = Number(record.quantity) || 0;
+      const lineTotal = Number(record.total_price) || 0;
+      const orderId = Number(record.order_id) || 0;
+      const buyerKey = String(record.buyer_email || record.buyer_name || `order-${orderId}`).trim().toLowerCase();
+
+      if (orderId) orderIds.add(orderId);
+      if (buyerKey) customerKeys.add(buyerKey);
+
+      acc.totalUnits += quantity;
+      acc.totalRevenue += lineTotal;
+      return acc;
+    }, {
+      totalUnits: 0,
+      totalRevenue: 0
+    });
+
+    summary.totalOrders = orderIds.size;
+    summary.totalCustomers = customerKeys.size;
+    summary.totalRecords = records.length;
+
+    return { records, summary };
+  }
 }
 
 module.exports = Order;

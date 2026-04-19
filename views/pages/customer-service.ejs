@@ -1,0 +1,77 @@
+<section class="customer-service-page">
+    <div class="service-hero">
+        <div class="service-hero-inner">
+            <span class="service-kicker">Customer Service</span>
+            <h1><%= servicePage.heading %></h1>
+            <p><%= servicePage.intro %></p>
+        </div>
+    </div>
+
+    <% if (servicePage.cards && servicePage.cards.length > 0) { %>
+        <section class="service-grid-section">
+            <div class="service-grid">
+                <% servicePage.cards.forEach((card) => { %>
+                    <article class="service-card">
+                        <div class="service-card-icon">
+                            <i class="<%= card.icon %>"></i>
+                        </div>
+                        <h3><%= card.title %></h3>
+                        <p><%= card.body %></p>
+                    </article>
+                <% }) %>
+            </div>
+        </section>
+    <% } %>
+
+    <% if (servicePage.panels && servicePage.panels.length > 0) { %>
+        <section class="service-panels">
+            <% servicePage.panels.forEach((panel) => { %>
+                <article class="service-panel">
+                    <h2><%= panel.title %></h2>
+                    <ul>
+                        <% panel.items.forEach((item) => { %>
+                            <li><%= item %></li>
+                        <% }) %>
+                    </ul>
+                </article>
+            <% }) %>
+        </section>
+    <% } %>
+
+    <% if (servicePage.faqs && servicePage.faqs.length > 0) { %>
+        <section class="service-faq-section">
+            <div class="section-title">
+                <h2>Helpful Answers</h2>
+                <p>Quick guidance for this customer-service section</p>
+            </div>
+
+            <div class="accordion service-accordion" id="serviceAccordion">
+                <% servicePage.faqs.forEach((item, index) => { %>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-<%= index %>">
+                            <button class="accordion-button <%= index === 0 ? '' : 'collapsed' %>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<%= index %>" aria-expanded="<%= index === 0 ? 'true' : 'false' %>" aria-controls="collapse-<%= index %>">
+                                <%= item.question %>
+                            </button>
+                        </h2>
+                        <div id="collapse-<%= index %>" class="accordion-collapse collapse <%= index === 0 ? 'show' : '' %>" aria-labelledby="heading-<%= index %>" data-bs-parent="#serviceAccordion">
+                            <div class="accordion-body">
+                                <%= item.answer %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </section>
+    <% } %>
+
+    <section class="service-cta">
+        <div class="service-cta-copy">
+            <h2>Still need help?</h2>
+            <p>Use the phone numbers or email in our footer and include your order number so the team can help faster.</p>
+        </div>
+        <div class="service-cta-actions">
+            <a href="/contact" class="btn">Contact Support</a>
+            <a href="/orders" class="btn btn-outline">View My Orders</a>
+        </div>
+    </section>
+</section>

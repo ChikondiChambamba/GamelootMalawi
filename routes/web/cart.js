@@ -144,10 +144,15 @@ async function sendOrderEmailsInBackground(payload) {
         { attachments: [invoiceAttachment] }
       );
     } catch (mailErr) {
-      console.error('Order confirmation email send failed:', mailErr);
+      console.error('Order confirmation email send failed:', {
+        orderNumber: order.order_number || order.id,
+        recipient: customerEmail,
+        error: mailErr && mailErr.message ? mailErr.message : String(mailErr),
+        mailer: mailer.getMailerStatus()
+      });
     }
 
-    const adminEmail = process.env.ADMIN_INVOICE_EMAIL || process.env.SMTP_FROM;
+    const adminEmail = process.env.ADMIN_INVOICE_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
     if (adminEmail) {
       const adminHtml = `
         <h2>New Order Invoice</h2>
@@ -164,10 +169,17 @@ async function sendOrderEmailsInBackground(payload) {
       try {
         const attachments = [invoiceAttachment];
         if (receiptFile && receiptFile.path) {
-          attachments.push({
-            filename: receiptFile.originalname || 'payment-receipt',
-            path: receiptFile.path
-          });
+          if (fs.existsSync(receiptFile.path)) {
+            attachments.push({
+              filename: receiptFile.originalname || 'payment-receipt',
+              path: receiptFile.path
+            });
+          } else {
+            console.warn('Payment receipt attachment missing on disk before admin email send:', {
+              orderNumber: order.order_number || order.id,
+              expectedPath: receiptFile.path
+            });
+          }
         }
         await mailer.sendMail(
           adminEmail,
@@ -176,8 +188,17 @@ async function sendOrderEmailsInBackground(payload) {
           { attachments }
         );
       } catch (mailErr) {
-        console.error('Admin invoice email send failed:', mailErr);
+        console.error('Admin invoice email send failed:', {
+          orderNumber: order.order_number || order.id,
+          recipient: adminEmail,
+          error: mailErr && mailErr.message ? mailErr.message : String(mailErr),
+          mailer: mailer.getMailerStatus()
+        });
       }
+    } else {
+      console.warn('Admin invoice email skipped because no admin recipient is configured.', {
+        orderNumber: order.order_number || order.id
+      });
     }
   } catch (invoiceErr) {
     console.error('Invoice generation failed, order was still created:', invoiceErr);

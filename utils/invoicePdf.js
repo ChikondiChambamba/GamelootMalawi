@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const { applyBrandedPdfHeader } = require('./pdfBranding');
 
 async function loadImageBuffer(imageUrl) {
   if (!imageUrl) return null;
@@ -34,26 +35,9 @@ async function buildInvoicePdf({ order, items, shippingAddress }) {
   const chunks = [];
 
   doc.on('data', (chunk) => chunks.push(chunk));
+  applyBrandedPdfHeader(doc, { title: 'Invoice' });
 
-  const logoCandidates = [
-    path.join(process.cwd(), 'public', 'images', 'logo', 'GAMELOOT LOGO TP.png'),
-    path.join(process.cwd(), 'public', 'images', 'logo', 'GAMELOOT LOGO blue black.png'),
-    path.join(process.cwd(), 'public', 'images', 'logo', 'GAMELOOT LOGO.png')
-  ];
-  const logoPath = logoCandidates.find((p) => fs.existsSync(p));
-
-  if (logoPath) {
-    try {
-      const logoWidth = 170;
-      const x = (doc.page.width - logoWidth) / 2;
-      doc.image(logoPath, x, doc.y, { width: logoWidth });
-      doc.moveDown(2.6);
-    } catch (e) {
-      // continue without logo if image parsing fails
-    }
-  }
-
-  doc.fontSize(21).text('GameLootMalawi - Invoice', { align: 'left' });
+  doc.fontSize(21).text('Invoice', { align: 'left' });
   doc.moveDown(0.5);
   doc.fontSize(10).fillColor('#666').text(`Order #: ${order.order_number || order.id}`);
   doc.text(`Date: ${new Date().toLocaleString()}`);
@@ -70,7 +54,7 @@ async function buildInvoicePdf({ order, items, shippingAddress }) {
   for (const item of items) {
     if (y > 710) {
       doc.addPage();
-      y = 50;
+      y = doc.y;
     }
 
     doc.roundedRect(40, y, 515, 84, 8).lineWidth(1).strokeColor('#e6e6e6').stroke();
@@ -99,8 +83,12 @@ async function buildInvoicePdf({ order, items, shippingAddress }) {
     y += 92;
   }
 
-  if (y > 720) doc.addPage();
-  doc.moveDown(0.8);
+  if (y > 720) {
+    doc.addPage();
+    y = doc.y;
+  }
+  doc.y = y + 6;
+  doc.moveDown(0.6);
   doc.fontSize(13).fillColor('#111').text(`Total: ${money(order.total_amount)}`, { align: 'right' });
   doc.moveDown(0.4);
   doc.fontSize(9).fillColor('#777').text('Thank you for shopping with GameLootMalawi.', { align: 'right' });

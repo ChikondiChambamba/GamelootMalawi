@@ -14,6 +14,10 @@ function parseBool(value, fallback = false) {
   return v === 'true' || v === '1' || v === 'yes';
 }
 
+function looksLikeEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean(value));
+}
+
 const SMTP_HOST = clean(process.env.SMTP_HOST || env.SMTP_HOST);
 const SMTP_USER = clean(process.env.SMTP_USER || env.SMTP_USER);
 let SMTP_PASS = clean(process.env.SMTP_PASS || env.SMTP_PASS);
@@ -21,7 +25,34 @@ const SMTP_PORT = parseInt(clean(process.env.SMTP_PORT || 587), 10) || 587;
 const SMTP_SECURE = parseBool(process.env.SMTP_SECURE, SMTP_PORT === 465);
 const SMTP_DEBUG = parseBool(process.env.SMTP_DEBUG, false);
 const isProd = process.env.NODE_ENV === 'production';
-const SMTP_FROM = clean(process.env.SMTP_FROM || SMTP_USER || 'no-reply@gamelootmalawi@gmail.com');
+const mailerWarnings = [];
+
+function resolveFromAddress() {
+  const rawFrom = clean(process.env.SMTP_FROM || env.SMTP_FROM);
+
+  if (rawFrom && !looksLikeEmail(rawFrom)) {
+    mailerWarnings.push('SMTP_FROM is invalid; falling back to SMTP_USER.');
+  }
+
+  // Gmail frequently rejects or rewrites unauthorised custom From addresses.
+  if (
+    SMTP_HOST === 'smtp.gmail.com' &&
+    looksLikeEmail(rawFrom) &&
+    looksLikeEmail(SMTP_USER) &&
+    rawFrom.toLowerCase() !== SMTP_USER.toLowerCase()
+  ) {
+    mailerWarnings.push('SMTP_FROM differs from SMTP_USER on Gmail; using SMTP_USER to improve deliverability.');
+    return SMTP_USER;
+  }
+
+  if (looksLikeEmail(rawFrom)) return rawFrom;
+  if (looksLikeEmail(SMTP_USER)) return SMTP_USER;
+
+  mailerWarnings.push('No valid SMTP_FROM address resolved.');
+  return '';
+}
+
+const SMTP_FROM = resolveFromAddress();
 
 if (SMTP_HOST === 'smtp.gmail.com' && /\s/.test(SMTP_PASS)) {
   SMTP_PASS = SMTP_PASS.replace(/\s+/g, '');
@@ -111,6 +142,7 @@ function getMailerStatus() {
     secure: SMTP_SECURE,
     debug: SMTP_DEBUG,
     from: SMTP_FROM || null,
+    warnings: mailerWarnings.slice(),
     lastVerifyError,
     lastSendError,
     lastSendOkAt

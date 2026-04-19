@@ -1,0 +1,110 @@
+<div class="container-fluid py-4 admin-sales-report">
+  <div class="row g-3 align-items-end mb-4">
+    <div class="col-lg-6">
+      <h2>Sales Report</h2>
+      <p class="text-muted mb-0">Track sold products, their selling price, and the customer attached to each order line.</p>
+    </div>
+    <div class="col-lg-6 text-lg-end">
+      <a class="btn btn-outline-dark me-2 mb-2" href="/admin/orders">
+        <i class="fas fa-arrow-left"></i> Back to Orders
+      </a>
+      <a class="btn btn-dark me-2 mb-2" href="/admin/sales-report.pdf<%= exportQuery %>">
+        <i class="fas fa-file-pdf"></i> Download PDF
+      </a>
+      <a class="btn btn-success mb-2" href="/admin/sales-report.xls<%= exportQuery %>">
+        <i class="fas fa-file-excel"></i> Download Excel
+      </a>
+    </div>
+  </div>
+
+  <form class="row g-3 report-filter-bar mb-4" method="GET" action="/admin/sales-report">
+    <div class="col-md-3">
+      <label class="form-label" for="status">Status</label>
+      <select class="form-select" id="status" name="status">
+        <option value="active" <%= reportFilters.status === 'active' ? 'selected' : '' %>>Active Sales</option>
+        <option value="all" <%= reportFilters.status === 'all' ? 'selected' : '' %>>All Orders</option>
+        <option value="pending" <%= reportFilters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="confirmed" <%= reportFilters.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+        <option value="shipped" <%= reportFilters.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+        <option value="delivered" <%= reportFilters.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+        <option value="cancelled" <%= reportFilters.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dateFrom">Date From</label>
+      <input class="form-control" id="dateFrom" name="dateFrom" type="date" value="<%= reportFilters.dateFrom || '' %>">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dateTo">Date To</label>
+      <input class="form-control" id="dateTo" name="dateTo" type="date" value="<%= reportFilters.dateTo || '' %>">
+    </div>
+    <div class="col-md-3 d-flex align-items-end gap-2">
+      <button class="btn btn-primary flex-fill" type="submit">Apply Filters</button>
+      <a class="btn btn-light flex-fill" href="/admin/sales-report">Reset</a>
+    </div>
+  </form>
+
+  <div class="report-summary-grid mb-4">
+    <article class="report-summary-card">
+      <span class="report-summary-label">Orders</span>
+      <strong><%= Number(reportSummary.totalOrders || 0).toLocaleString() %></strong>
+    </article>
+    <article class="report-summary-card">
+      <span class="report-summary-label">Customers</span>
+      <strong><%= Number(reportSummary.totalCustomers || 0).toLocaleString() %></strong>
+    </article>
+    <article class="report-summary-card">
+      <span class="report-summary-label">Units Sold</span>
+      <strong><%= Number(reportSummary.totalUnits || 0).toLocaleString() %></strong>
+    </article>
+    <article class="report-summary-card">
+      <span class="report-summary-label">Revenue</span>
+      <strong>MWK <%= Number(reportSummary.totalRevenue || 0).toLocaleString() %></strong>
+    </article>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Product</th>
+          <th>Buyer</th>
+          <th>Quantity</th>
+          <th>Unit Price</th>
+          <th>Line Total</th>
+          <th>Status</th>
+          <th>Payment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (reportRecords && reportRecords.length > 0) { %>
+          <% reportRecords.forEach((row) => { %>
+            <tr>
+              <td><%= row.order_number || row.order_id %></td>
+              <td><%= row.created_at ? new Date(row.created_at).toLocaleString() : '' %></td>
+              <td>
+                <strong><%= row.product_name %></strong>
+              </td>
+              <td>
+                <div><strong><%= row.buyer_name %></strong></div>
+                <div class="small text-muted"><%= row.buyer_email || 'No email' %></div>
+                <div class="small text-muted"><%= row.buyer_phone || 'No phone' %></div>
+              </td>
+              <td><%= Number(row.quantity || 0).toLocaleString() %></td>
+              <td>MWK <%= Number(row.unit_price || 0).toLocaleString() %></td>
+              <td>MWK <%= Number(row.total_price || 0).toLocaleString() %></td>
+              <td><span class="badge <%= row.status === 'delivered' ? 'bg-success' : (row.status === 'cancelled' ? 'bg-danger' : 'bg-secondary') %>"><%= row.status %></span></td>
+              <td><%= row.payment_method || 'N/A' %></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="9" class="text-center py-4">No matching sales records found for the current filter set.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
