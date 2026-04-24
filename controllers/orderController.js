@@ -1,38 +1,18 @@
 const Order = require('../models/order');
-const { validationResult } = require('express-validator');
+const { OrderService } = require('../services/OrderService');
 const { sendOrderStatusUpdateEmail } = require('../utils/orderStatusEmail');
 
 // Create new order
 exports.createOrder = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
     const { items, shipping_address, billing_address, payment_method } = req.body;
-    
-    // Calculate total amount
-    const total_amount = items.reduce((total, item) => {
-      return total + (item.unit_price * item.quantity);
-    }, 0);
-
-    const orderData = {
-      user_id: req.user.id,
-      total_amount,
-      shipping_address,
-      billing_address: billing_address || shipping_address,
-      customer_name: req.user.name,
-      customer_email: req.user.email,
-      customer_phone: req.user.phone,
-      payment_method
-    };
-
-    const order = await Order.create(orderData, items);
+    const order = await OrderService.createOrder({
+      user: req.user,
+      items,
+      shippingAddress: shipping_address,
+      billingAddress: billing_address,
+      paymentMethod: payment_method
+    });
 
     res.status(201).json({
       success: true,
@@ -41,9 +21,9 @@ exports.createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
-    res.status(500).json({ 
+    res.status(error.status || 500).json({ 
       success: false, 
-      message: 'Server error while creating order' 
+      message: error.status ? error.message : 'Server error while creating order'
     });
   }
 };

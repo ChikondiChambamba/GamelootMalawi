@@ -1,46 +1,17 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
 const Cart = require('../../models/Cart');
 const Product = require('../../models/Product');
 const Order = require('../../models/order');
 const PaymentSettings = require('../../models/PaymentSettings');
-const mailer = require('../../utils/mailer');
-const { buildInvoicePdf } = require('../../utils/invoicePdf');
-const { toPublicFileUrl } = require('../../utils/filePathToUrl');
+const { receiptUpload } = require('../../config/cloudinaryConfig');
+const { getUploadedFileUrl } = require('../../utils/filePathToUrl');
+const logger = require('../../utils/logger');
+const { enqueueOrderPostProcessingJob } = require('../../queues/orderPostProcessingQueue');
+const { runOrderPostProcessing } = require('../../utils/orderPostProcessing');
 
 const router = express.Router();
-
-const receiptStorage = multer.diskStorage({
-  destination(req, file, cb) {
-    const dir = path.join(process.cwd(), 'public', 'uploads', 'receipts');
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-    } catch (e) {
-      // continue
-    }
-    cb(null, dir);
-  },
-  filename(req, file, cb) {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname.replace(/\s+/g, '-')}`);
-  }
-});
-
-function receiptFileFilter(req, file, cb) {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-  if (!allowed.includes(file.mimetype)) {
-    return cb(new Error('Invalid receipt file type. Upload JPG, PNG, or WEBP.'), false);
-  }
-  return cb(null, true);
-}
-
-const uploadReceipt = multer({
-  storage: receiptStorage,
-  fileFilter: receiptFileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
-}).single('paymentReceipt');
+const uploadReceipt = receiptUpload.single('paymentReceipt');
 
 function getGuestCartRaw(req) {
   if (!req.session.guestCart) req.session.guestCart = [];
@@ -84,125 +55,6 @@ function createCheckoutNonce(req) {
   const nonce = `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
   req.session.checkoutNonce = nonce;
   return nonce;
-}
-
-async function sendOrderEmailsInBackground(payload) {
-  const {
-    order,
-    orderData,
-    items,
-    totalAmount,
-    shippingAddress,
-    customerEmail,
-    paymentReceiptUrl,
-    siteBaseUrl,
-    receiptFile
-  } = payload;
-
-  const listItems = items
-    .map((i, idx) => {
-      const qty = Number(i.quantity) || 1;
-      const unitPrice = Number(i.price) || 0;
-      const lineTotal = qty * unitPrice;
-      return `<li>${idx + 1}. ${i.name} - Qty ${qty} x MWK ${unitPrice.toLocaleString()} = MWK ${lineTotal.toLocaleString()}</li>`;
-    })
-    .join('');
-
-  try {
-    const invoicePdf = await buildInvoicePdf({
-      order: {
-        ...orderData,
-        order_number: order.order_number || order.id
-      },
-      items,
-      shippingAddress
-    });
-
-    const invoiceAttachment = {
-      filename: `invoice-${order.order_number || order.id}.pdf`,
-      content: invoicePdf,
-      contentType: 'application/pdf'
-    };
-
-    const customerHtml = `
-      <h2>Order Confirmation</h2>
-      <p>Hi ${orderData.customer_name}, your order has been placed successfully.</p>
-      <p><strong>Order #:</strong> ${order.order_number || order.id}</p>
-      <p><strong>Total:</strong> MWK ${Number(totalAmount).toLocaleString()}</p>
-      <p><strong>Payment Method:</strong> ${orderData.payment_method}</p>
-      <p><strong>Shipping Address:</strong> ${shippingAddress}</p>
-      ${paymentReceiptUrl ? `<p><strong>Payment Receipt:</strong> <a href="${siteBaseUrl}${paymentReceiptUrl}">View uploaded receipt</a></p>` : ''}
-      <h4>Order Items</h4>
-      <ul>${listItems}</ul>
-    `;
-
-    try {
-      await mailer.sendMail(
-        customerEmail,
-        `GameLootMalawi Order Confirmation - ${order.order_number || order.id}`,
-        customerHtml,
-        { attachments: [invoiceAttachment] }
-      );
-    } catch (mailErr) {
-      console.error('Order confirmation email send failed:', {
-        orderNumber: order.order_number || order.id,
-        recipient: customerEmail,
-        error: mailErr && mailErr.message ? mailErr.message : String(mailErr),
-        mailer: mailer.getMailerStatus()
-      });
-    }
-
-    const adminEmail = process.env.ADMIN_INVOICE_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
-    if (adminEmail) {
-      const adminHtml = `
-        <h2>New Order Invoice</h2>
-        <p><strong>Order #:</strong> ${order.order_number || order.id}</p>
-        <p><strong>Customer:</strong> ${orderData.customer_name} (${customerEmail})</p>
-        <p><strong>Phone:</strong> ${orderData.customer_phone || 'N/A'}</p>
-        <p><strong>Payment Method:</strong> ${orderData.payment_method}</p>
-        <p><strong>Shipping Address:</strong> ${shippingAddress}</p>
-        ${paymentReceiptUrl ? `<p><strong>Payment Receipt:</strong> <a href="${siteBaseUrl}${paymentReceiptUrl}">${siteBaseUrl}${paymentReceiptUrl}</a></p>` : ''}
-        <p><strong>Total:</strong> MWK ${Number(totalAmount).toLocaleString()}</p>
-        <h4>Items</h4>
-        <ul>${listItems}</ul>
-      `;
-      try {
-        const attachments = [invoiceAttachment];
-        if (receiptFile && receiptFile.path) {
-          if (fs.existsSync(receiptFile.path)) {
-            attachments.push({
-              filename: receiptFile.originalname || 'payment-receipt',
-              path: receiptFile.path
-            });
-          } else {
-            console.warn('Payment receipt attachment missing on disk before admin email send:', {
-              orderNumber: order.order_number || order.id,
-              expectedPath: receiptFile.path
-            });
-          }
-        }
-        await mailer.sendMail(
-          adminEmail,
-          `Invoice - New Order ${order.order_number || order.id}`,
-          adminHtml,
-          { attachments }
-        );
-      } catch (mailErr) {
-        console.error('Admin invoice email send failed:', {
-          orderNumber: order.order_number || order.id,
-          recipient: adminEmail,
-          error: mailErr && mailErr.message ? mailErr.message : String(mailErr),
-          mailer: mailer.getMailerStatus()
-        });
-      }
-    } else {
-      console.warn('Admin invoice email skipped because no admin recipient is configured.', {
-        orderNumber: order.order_number || order.id
-      });
-    }
-  } catch (invoiceErr) {
-    console.error('Invoice generation failed, order was still created:', invoiceErr);
-  }
 }
 
 router.get('/cart', async (req, res) => {
@@ -390,7 +242,7 @@ router.post('/orders', (req, res, next) => {
       return res.redirect('/checkout');
     }
 
-    const paymentReceiptUrl = req.file ? toPublicFileUrl(req.file.path) : null;
+    const paymentReceiptUrl = req.file ? getUploadedFileUrl(req.file) : null;
     const siteBaseUrl = process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
 
     const orderData = {
@@ -424,31 +276,58 @@ router.post('/orders', (req, res, next) => {
     if (req.session.user) await Cart.clearCart(req.session.user.id);
     else req.session.guestCart = [];
 
-    req.session.lastOrderSuccess = {
+    const lastOrderSuccess = {
       orderNumber: order.order_number || String(order.id),
       email: customerEmail,
       totalAmount
     };
+    req.session.lastOrderSuccess = lastOrderSuccess;
     req.session.orderSubmitInFlight = false;
 
-    const receiptFile = req.file ? { path: req.file.path, originalname: req.file.originalname } : null;
-    setImmediate(() => {
-      sendOrderEmailsInBackground({
-        order,
-        orderData,
-        items,
-        totalAmount,
-        shippingAddress,
-        customerEmail,
-        paymentReceiptUrl,
-        siteBaseUrl,
-        receiptFile
-      }).catch((err) => {
-        console.error('Background order email task failed:', err);
-      });
-    });
+    const receiptFile = req.file ? {
+      path: req.file.path || null,
+      url: getUploadedFileUrl(req.file),
+      originalname: req.file.originalname
+    } : null;
+    const postProcessingPayload = {
+      order,
+      orderData,
+      items,
+      totalAmount,
+      shippingAddress,
+      customerEmail,
+      paymentReceiptUrl,
+      siteBaseUrl,
+      receiptFile
+    };
 
-    return res.redirect(`/order-success/${encodeURIComponent(order.order_number || order.id)}`);
+    try {
+      await enqueueOrderPostProcessingJob(postProcessingPayload);
+    } catch (queueErr) {
+      logger.error('order_post_processing_enqueue_failed', {
+        orderNumber: order.order_number || order.id,
+        error: queueErr && queueErr.message ? queueErr.message : String(queueErr)
+      });
+
+      // Fall back to in-process background execution so checkout still succeeds
+      // even if Redis is temporarily unavailable.
+      setImmediate(() => {
+        runOrderPostProcessing(postProcessingPayload).catch((err) => {
+          logger.error('order_post_processing_fallback_failed', {
+            orderNumber: order.order_number || order.id,
+            error: err && err.message ? err.message : String(err)
+          });
+        });
+      });
+    }
+
+    return res.status(200).render('layout', {
+      title: `Order ${lastOrderSuccess.orderNumber} Confirmed - GameLootMalawi`,
+      content: 'pages/order-success',
+      orderNumber: lastOrderSuccess.orderNumber,
+      customerEmail: lastOrderSuccess.email,
+      totalAmount: lastOrderSuccess.totalAmount
+    });
   } catch (err) {
     req.session.orderSubmitInFlight = false;
     console.error('Place order error:', err);

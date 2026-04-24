@@ -275,6 +275,16 @@ SMTP_DEBUG=false
 
 APP_BASE_URL=http://localhost:5000
 
+REDIS_URL=
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_USERNAME=
+REDIS_PASSWORD=
+ORDER_POST_PROCESSING_CONCURRENCY=2
+ORDER_POST_PROCESSING_ATTEMPTS=3
+ORDER_POST_PROCESSING_BACKOFF_MS=5000
+
 CLOUDINARY_URL=
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
@@ -321,6 +331,18 @@ To run in standard mode:
 npm start
 ```
 
+To run the BullMQ worker that handles order post-processing:
+
+```bash
+npm run worker:order-post-processing
+```
+
+For local development with file watching:
+
+```bash
+npm run dev:worker:order-post-processing
+```
+
 ## Database Setup
 
 Apply the base schema from [database/schema.sql](/c:/Users/victus/Documents/GitHub/GamelootMalawi/database/schema.sql) using your preferred MySQL client.
@@ -345,6 +367,8 @@ Defined in [package.json](/c:/Users/victus/Documents/GitHub/GamelootMalawi/packa
 
 - `npm start` runs the production server
 - `npm run dev` starts the app in watch mode
+- `npm run worker:order-post-processing` starts the BullMQ worker for order emails and invoice generation
+- `npm run dev:worker:order-post-processing` starts the BullMQ worker in watch mode
 - `npm run test-db` runs the database connectivity test
 - `npm run test-mailer` runs the mailer test script
 
@@ -412,6 +436,7 @@ Before deploying, verify:
 - `SESSION_SECRET` is set
 - database credentials or `DATABASE_URL` are correct
 - SMTP values are valid if email is required
+- Redis is reachable for BullMQ job enqueueing and worker processing
 - `APP_BASE_URL` matches the deployed site
 - upload strategy matches the hosting environment
 
@@ -419,7 +444,9 @@ Before deploying, verify:
 
 - Product uploads are Cloudinary-ready.
 - Payment receipts currently rely on local disk storage.
-- Order emails are sent after checkout completion, so order creation can succeed even if email delivery fails.
+- Order confirmation emails and invoice generation are offloaded to BullMQ on the `order-post-processing` queue.
+- A separate worker process must be running for queued order post-processing to execute.
+- If Redis enqueueing fails, the checkout flow falls back to in-process background execution so the order still completes.
 - The `/health` endpoint is the quickest way to inspect mailer readiness.
 
 ## Documentation Files

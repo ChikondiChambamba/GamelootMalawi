@@ -85,14 +85,37 @@ cloudinary.config({
   secure: true
 });
 
-const storage = new CloudinaryStorage({
+const productStorage = new CloudinaryStorage({
   cloudinary,
   params: async () => ({
-    folder: 'gameloot_products', // Folder name in Cloudinary
+    folder: 'gameloot_products',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
   })
 });
 
-const upload = multer({ storage });
+const receiptStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: 'gameloot_receipts',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    resource_type: 'image',
+    public_id: `receipt-${Date.now()}-${Math.round(Math.random() * 1e9)}`.replace(/\s+/g, '-')
+  })
+});
 
-module.exports = { cloudinary, upload, hasCloudinaryEnv };
+function imageFileFilter(req, file, cb) {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+  if (!allowed.includes(file.mimetype)) {
+    return cb(new Error('Invalid receipt file type. Upload JPG, PNG, or WEBP.'), false);
+  }
+  return cb(null, true);
+}
+
+const upload = multer({ storage: productStorage });
+const receiptUpload = multer({
+  storage: receiptStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+module.exports = { cloudinary, upload, receiptUpload, hasCloudinaryEnv };
