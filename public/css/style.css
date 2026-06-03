@@ -500,9 +500,9 @@ nav a:hover::after, nav a.active::after {
 .gaming-news-section {
     padding: 4.5rem 5%;
     background:
-        linear-gradient(135deg, rgba(42, 10, 94, 0.96), rgba(13, 2, 33, 0.98)),
-        radial-gradient(circle at 18% 18%, rgba(0, 195, 255, 0.18), transparent 38%);
-    color: #fff;
+        radial-gradient(circle at 12% 18%, rgba(0, 195, 255, 0.12), transparent 32%),
+        linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    color: var(--dark);
 }
 
 .gaming-news-home {
@@ -524,18 +524,17 @@ nav a:hover::after, nav a.active::after {
 }
 
 .gaming-news-section .section-title h2 {
-    color: #fff;
+    color: var(--primary);
 }
 
 .gaming-news-section .section-title p {
-    color: rgba(255, 255, 255, 0.74);
+    color: var(--gray);
     margin: 0;
     max-width: 760px;
 }
 
 .news-view-all,
 .news-source-link {
-    color: var(--accent);
     text-decoration: none;
     font-weight: 700;
     display: inline-flex;
@@ -546,8 +545,33 @@ nav a:hover::after, nav a.active::after {
 
 .news-view-all:hover,
 .news-source-link:hover {
-    color: #fff;
     transform: translateY(-2px);
+}
+
+.news-view-all {
+    color: var(--primary);
+}
+
+.news-view-all:hover {
+    color: var(--secondary);
+}
+
+.news-source-link {
+    width: fit-content;
+    margin-top: auto;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b00, #ff8c2b);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    box-shadow: 0 8px 20px rgba(255, 107, 0, 0.26);
+}
+
+.news-source-link:hover {
+    color: #fff;
+    box-shadow: 0 12px 26px rgba(255, 107, 0, 0.36);
 }
 
 .news-grid {
@@ -566,18 +590,28 @@ nav a:hover::after, nav a.active::after {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 1rem;
-    padding: 1.3rem;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+    padding: 1.35rem;
+    border-radius: 15px;
+    background: #fff;
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--card-shadow);
     transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.news-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--secondary), var(--accent));
 }
 
 .news-card:hover {
-    transform: translateY(-6px);
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(0, 195, 255, 0.42);
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    border-color: rgba(42, 10, 94, 0.12);
 }
 
 .news-card-icon {
@@ -595,6 +629,8 @@ nav a:hover::after, nav a.active::after {
 
 .news-card-content {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .news-meta {
@@ -602,7 +638,7 @@ nav a:hover::after, nav a.active::after {
     flex-wrap: wrap;
     gap: 0.55rem;
     align-items: center;
-    color: rgba(255, 255, 255, 0.68);
+    color: var(--gray);
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -610,12 +646,12 @@ nav a:hover::after, nav a.active::after {
 }
 
 .news-meta span:first-child {
-    color: var(--accent);
+    color: var(--secondary);
 }
 
 .news-card h3,
 .news-card h2 {
-    color: #fff;
+    color: var(--primary);
     font-size: 1.18rem;
     line-height: 1.3;
     margin-bottom: 0.65rem;
@@ -626,7 +662,7 @@ nav a:hover::after, nav a.active::after {
 }
 
 .news-card p {
-    color: rgba(255, 255, 255, 0.76);
+    color: #555;
     font-size: 0.95rem;
     margin-bottom: 1rem;
 }
@@ -639,9 +675,9 @@ nav a:hover::after, nav a.active::after {
 }
 
 .news-tags span {
-    color: #fff;
-    background: rgba(0, 195, 255, 0.16);
-    border: 1px solid rgba(0, 195, 255, 0.24);
+    color: var(--primary);
+    background: #f0f4ff;
+    border: 1px solid rgba(42, 10, 94, 0.08);
     border-radius: 999px;
     padding: 0.32rem 0.65rem;
     font-size: 0.78rem;
@@ -684,7 +720,7 @@ nav a:hover::after, nav a.active::after {
 }
 
 .news-page-section {
-    background: #0d0221;
+    background: #f8f9fa;
 }
 
 .news-topic-strip {
@@ -696,11 +732,12 @@ nav a:hover::after, nav a.active::after {
 }
 
 .news-topic-strip span {
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(42, 10, 94, 0.1);
     border-radius: 999px;
     padding: 0.55rem 0.9rem;
-    color: rgba(255, 255, 255, 0.82);
-    background: rgba(255, 255, 255, 0.06);
+    color: var(--primary);
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     font-weight: 600;
 }
 
