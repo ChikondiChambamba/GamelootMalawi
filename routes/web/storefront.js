@@ -2,6 +2,7 @@ const express = require('express');
 const Product = require('../../models/Product');
 const Promotion = require('../../models/Promotion');
 const db = require('../../config/database');
+const { getLatestNews, getNewsTopics } = require('../../utils/newsService');
 const {
   getCategoryVisual,
   addCategoryVisuals,
@@ -299,6 +300,7 @@ router.get('/', async (req, res) => {
       featuredProducts,
       allProducts,
       categories,
+      latestNews: getLatestNews(3),
       currentUser: req.session.user
     });
   } catch (error) {
@@ -307,10 +309,22 @@ router.get('/', async (req, res) => {
       title: 'GameLootMalawi - Premium Gaming & Electronics',
       content: 'pages/home',
       featuredProducts: [],
+      allProducts: [],
       categories: [],
+      latestNews: getLatestNews(3),
       currentUser: req.session.user
     });
   }
+});
+
+router.get('/news', (req, res) => {
+  res.render('layout', {
+    title: 'Gaming News - GameLootMalawi',
+    content: 'pages/news',
+    currentSection: 'news',
+    latestNews: getLatestNews(),
+    newsTopics: getNewsTopics()
+  });
 });
 
 router.get('/shop', async (req, res) => {

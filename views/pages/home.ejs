@@ -12,6 +12,47 @@
     </div>
 </section>
 
+<!-- Gaming News section -->
+<section class="gaming-news-section gaming-news-home">
+    <div class="news-section-header">
+        <div class="section-title">
+            <h2>Latest Gaming News</h2>
+            <p>Video games, EA SPORTS FC, FIFA, EPL, UEFA, World Cup, and esports updates for Malawi's gaming community</p>
+        </div>
+        <a href="/news" class="news-view-all">View All News <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="news-grid news-grid-home">
+        <% if (latestNews && latestNews.length > 0) { %>
+            <% latestNews.forEach((item, index) => { %>
+                <article class="news-card animate-on-scroll" style="--stagger:<%= index %>;">
+                    <div class="news-card-icon">
+                        <i class="<%= item.icon %>"></i>
+                    </div>
+                    <div class="news-card-content">
+                        <div class="news-meta">
+                            <span><%= item.category %></span>
+                            <time datetime="<%= item.date %>"><%= new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></time>
+                        </div>
+                        <h3><%= item.title %></h3>
+                        <p><%= item.summary %></p>
+                        <div class="news-tags">
+                            <% item.tags.slice(0, 3).forEach(tag => { %>
+                                <span><%= tag %></span>
+                            <% }) %>
+                        </div>
+                        <a href="<%= item.sourceUrl %>" class="news-source-link" <%= item.sourceUrl.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : '' %>>
+                            Read from <%= item.source %> <i class="fas fa-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </article>
+            <% }) %>
+        <% } else { %>
+            <p class="no-products">No gaming news available at the moment.</p>
+        <% } %>
+    </div>
+</section>
+
 <!-- Categories section -->
 <section class="category-arc-section" id="category-arc-section">
     <div class="section-title">

@@ -1,0 +1,42 @@
+<section class="news-page-hero">
+    <div class="news-page-hero-content">
+        <span class="news-page-kicker">GameLootMalawi Newsroom</span>
+        <h1>Gaming News</h1>
+        <p>Latest updates across video games, EA SPORTS FC, FIFA, EPL, UEFA, World Cup content, and esports.</p>
+    </div>
+</section>
+
+<section class="gaming-news-section news-page-section">
+    <div class="news-topic-strip" aria-label="Gaming news topics">
+        <% newsTopics.forEach(topic => { %>
+            <span><%= topic %></span>
+        <% }) %>
+    </div>
+
+    <div class="news-grid news-grid-page">
+        <% latestNews.forEach((item, index) => { %>
+            <article class="news-card news-card-wide animate-on-scroll" style="--stagger:<%= index %>;">
+                <div class="news-card-icon">
+                    <i class="<%= item.icon %>"></i>
+                </div>
+                <div class="news-card-content">
+                    <div class="news-meta">
+                        <span><%= item.category %></span>
+                        <time datetime="<%= item.date %>"><%= new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></time>
+                        <span><%= item.readTime %></span>
+                    </div>
+                    <h2><%= item.title %></h2>
+                    <p><%= item.summary %></p>
+                    <div class="news-tags">
+                        <% item.tags.forEach(tag => { %>
+                            <span><%= tag %></span>
+                        <% }) %>
+                    </div>
+                    <a href="<%= item.sourceUrl %>" class="news-source-link" <%= item.sourceUrl.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : '' %>>
+                        Read from <%= item.source %> <i class="fas fa-up-right-from-square"></i>
+                    </a>
+                </div>
+            </article>
+        <% }) %>
+    </div>
+</section>
